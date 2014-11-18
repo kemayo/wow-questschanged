@@ -1,0 +1,16 @@
+## Interface: 60000
+## Title: QuestsChanged
+## Author: Kemayo
+## Notes: Show what quests have changed
+## Version: @project-version@
+## LoadOnDemand: 0
+## OptionalDeps: tekDebug
+
+## SavedVariables: QuestsChangedDB
+## SavedVariablesPerCharacter: QuestsChangedDBPC
+
+lib\LibStub.lua
+lib\CallbackHandler-1.0\CallbackHandler-1.0.xml
+lib\LibDataBroker-1.1\LibDataBroker-1.1.lua
+
+addon.lua
