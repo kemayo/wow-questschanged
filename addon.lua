@@ -35,6 +35,13 @@ local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject
     icon = [[Interface\Icons\Ability_Spy]],
 })
 
+dataobject.OnClick = function(frame, button)
+    if button == "RightButton" then
+        -- clear the list!
+        quests_completed = {}
+    end
+end
+
 dataobject.OnTooltipShow = function(tooltip)
     local new_quests = GetQuestsCompleted()
     for questid in pairs(new_quests) do
@@ -49,6 +56,8 @@ dataobject.OnTooltipShow = function(tooltip)
     for _, questid in ipairs(quests_completed) do
         tooltip:AddDoubleLine(quest_name(questid) or UNKNOWN, questid)
     end
+
+    tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
 
 -- local icon = LibStub("LibDBIcon-1.0", true)
