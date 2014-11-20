@@ -11,22 +11,31 @@ end)
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 local quest_names = {}
-local cache_tooltip = CreateFrame("GameTooltip", "QuestsChangedCacheTooltip")
-cache_tooltip:AddFontStrings(
-    cache_tooltip:CreateFontString("$parentTextLeft1", nil, "GameTooltipText"),
-    cache_tooltip:CreateFontString("$parentTextRight1", nil, "GameTooltipText")
-)
-local function quest_name(id)
-    if not quest_names[id] then
-        -- this doesn't work with just clearlines and the setowner outside of this, and I'm not sure why
-        cache_tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-        cache_tooltip:SetHyperlink(("quest:%d"):format(id))
-        if cache_tooltip:IsShown() then
-            quest_names[id] = QuestsChangedCacheTooltipTextLeft1:GetText()
+do
+    local tooltip
+    local function tooltip_line(link, line)
+        if not tooltip then
+            tooltip = CreateFrame("GameTooltip", myname.."_Tooltip", nil, "GameTooltipTemplate")
+            tooltip:SetOwner(UIParent, "ANCHOR_NONE")
         end
+        tooltip:ClearLines()
+        tooltip:SetHyperlink(link)
+        
+        if tooltip:NumLines() < line then return false end
+        return _G[myname.."_TooltipTextLeft"..line]:GetText()
     end
-    return quest_names[id]
+    quest_names = setmetatable({}, {__index = function(self, key)
+        local link = (type(key) == 'string') and key or ('quest:'..key)
+        local uid = string.match(link, '%d+')
+        local name = tooltip_line(link, 1)
+        if name then
+            self[uid] = name
+            return name
+        end
+        return false
+    end,})
 end
+qcqn = quest_names
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject("QuestsChanged", {
@@ -46,7 +55,6 @@ dataobject.OnTooltipShow = function(tooltip)
     local new_quests = GetQuestsCompleted()
     for questid in pairs(new_quests) do
         if not quests[questid] then
-            quest_name(questid) -- prep the cache for it
             table.insert(quests_completed, questid)
         end
     end
@@ -54,7 +62,7 @@ dataobject.OnTooltipShow = function(tooltip)
 
     tooltip:AddLine("QuestsChanged")
     for _, questid in ipairs(quests_completed) do
-        tooltip:AddDoubleLine(quest_name(questid) or UNKNOWN, questid)
+        tooltip:AddDoubleLine(quest_names[questid] or UNKNOWN, questid)
     end
 
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
