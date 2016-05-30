@@ -65,6 +65,8 @@ dataobject.OnTooltipShow = function(tooltip)
         tooltip:AddDoubleLine(quest_names[questid] or UNKNOWN, questid)
     end
 
+    local x, y = GetPlayerMapPosition("player")
+    tooltip:AddDoubleLine("Location", ("%.2f, %.2f"):format(x * 100, y * 100), 1, 0, 1, 1, 0, 1)
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
 
