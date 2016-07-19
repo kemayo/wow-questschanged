@@ -1,4 +1,4 @@
-## Interface: 60000
+## Interface: 70000
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
