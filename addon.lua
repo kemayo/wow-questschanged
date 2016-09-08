@@ -1,17 +1,36 @@
 local myname, ns = ...
 
+local icon = LibStub("LibDBIcon-1.0", true)
+
+local db
 local quests
 local quests_completed = {}
 
 local f = CreateFrame('Frame')
 f:SetScript("OnEvent", function(self, event, ...)
-    if event == "PLAYER_ENTERING_WORLD" then
+    if event == "ADDON_LOADED" then
+        if ... ~= myname then return end
+
+        _G[myname.."DB"] = setmetatable(_G[myname.."DB"] or {}, {
+            __index = {
+                minimap = false,
+            },
+        })
+        db = _G[myname.."DB"]
+
+        if icon then
+            icon:Register(myname, ns.dataobject, db)
+        end
+
+        self:UnregisterEvent("ADDON_LOADED")
+    elseif event == "PLAYER_ENTERING_WORLD" then
         quests = GetQuestsCompleted()
         f:UnregisterEvent("PLAYER_ENTERING_WORLD")
     else
         f:Show()
     end
 end)
+f:RegisterEvent("ADDON_LOADED")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("QUEST_LOG_UPDATE")
 f:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
@@ -107,7 +126,17 @@ dataobject.OnTooltipShow = function(tooltip)
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
 
--- local icon = LibStub("LibDBIcon-1.0", true)
--- if icon then
---     icon:Register("QuestsChanged", dataobject, self.db.profile.minimap)
--- end
+ns.dataobject = dataobject
+
+-- slash
+
+_G["SLASH_".. myname:upper().."1"] = "/questschanged"
+SlashCmdList[myname:upper()] = function(msg)
+    if not icon then return end
+    db.hide = not db.hide
+    if db.hide then
+        icon:Hide(myname)
+    else
+        icon:Show(myname)
+    end
+end
