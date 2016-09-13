@@ -90,6 +90,7 @@ function ns:CheckQuests()
                 map = microDungeon or mapFile,
                 x = x,
                 y = y,
+                level = GetCurrentMapDungeonLevel(),
             })
         end
     end
@@ -116,7 +117,7 @@ dataobject.OnTooltipShow = function(tooltip)
     for _, quest in ipairs(quests_completed) do
         tooltip:AddDoubleLine(
             ("%d: %s"):format(quest.id, quest_names[quest.id] or UNKNOWN),
-            ("%s %.2f, %.2f"):format(quest.map, quest.x * 100, quest.y * 100)
+            ("%s (%d) %.2f, %.2f"):format(quest.map, quest.level, quest.x * 100, quest.y * 100)
         )
     end
 
