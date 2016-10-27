@@ -8,33 +8,40 @@ local quests_completed = {}
 
 local f = CreateFrame('Frame')
 f:SetScript("OnEvent", function(self, event, ...)
-    if event == "ADDON_LOADED" then
-        if ... ~= myname then return end
-
-        _G[myname.."DB"] = setmetatable(_G[myname.."DB"] or {}, {
-            __index = {
-                minimap = false,
-            },
-        })
-        db = _G[myname.."DB"]
-
-        if icon then
-            icon:Register(myname, ns.dataobject, db)
-        end
-
-        self:UnregisterEvent("ADDON_LOADED")
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        quests = GetQuestsCompleted()
-        f:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    else
-        f:Show()
-    end
+    ns[event](ns, event, ...)
 end)
 f:RegisterEvent("ADDON_LOADED")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("QUEST_LOG_UPDATE")
-f:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
 f:Hide()
+
+function ns:ADDON_LOADED(event, name)
+    if name ~= myname then return end
+
+    _G[myname.."DB"] = setmetatable(_G[myname.."DB"] or {}, {
+        __index = {
+            minimap = false,
+        },
+    })
+    db = _G[myname.."DB"]
+
+    if icon then
+        icon:Register(myname, ns.dataobject, db)
+    end
+
+    f:UnregisterEvent("ADDON_LOADED")
+
+    if IsLoggedIn() then self:PLAYER_LOGIN() else f:RegisterEvent("PLAYER_LOGIN") end
+end
+function ns:PLAYER_LOGIN()
+    f:RegisterEvent("QUEST_LOG_UPDATE")
+    f:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
+    f:UnregisterEvent("PLAYER_LOGIN")
+
+    quests = GetQuestsCompleted()
+end
+function ns:QUEST_LOG_UPDATE()
+    f:Show()
+end
+function ns.ENCOUNTER_LOOT_RECEIVED = ns.QUEST_LOG_UPDATE
 
 do
     local time_since = 0
