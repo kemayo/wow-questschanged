@@ -96,8 +96,8 @@ function ns:CheckQuests()
                 id = questid,
                 time = time(),
                 map = microDungeon or mapFile,
-                x = x,
-                y = y,
+                x = x or 0,
+                y = y or 0,
                 level = GetCurrentMapDungeonLevel(),
             })
         end
@@ -131,7 +131,7 @@ dataobject.OnTooltipShow = function(tooltip)
 
     local mapFile, _, _, isMicroDungeon, microDungeon = GetMapInfo()
     local x, y = GetPlayerMapPosition("player")
-    tooltip:AddDoubleLine("Location", ("%s (%d) %.2f, %.2f"):format(microDungeon or mapFile, GetCurrentMapDungeonLevel(), x * 100, y * 100), 1, 0, 1, 1, 0, 1)
+    tooltip:AddDoubleLine("Location", ("%s (%d) %.2f, %.2f"):format(microDungeon or mapFile, GetCurrentMapDungeonLevel(), (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
 
