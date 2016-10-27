@@ -51,6 +51,7 @@ do
             return
         end
         ns:CheckQuests()
+        time_since = 0
         f:Hide()
     end)
 end
