@@ -41,7 +41,7 @@ end
 function ns:QUEST_LOG_UPDATE()
     f:Show()
 end
-function ns.ENCOUNTER_LOOT_RECEIVED = ns.QUEST_LOG_UPDATE
+ns.ENCOUNTER_LOOT_RECEIVED = ns.QUEST_LOG_UPDATE
 
 do
     local time_since = 0
