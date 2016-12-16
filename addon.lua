@@ -2,9 +2,10 @@ local myname, ns = ...
 
 local icon = LibStub("LibDBIcon-1.0", true)
 
-local db
+local db, dbpc
 local quests
 local quests_completed = {}
+ns.quests_completed = quests_completed
 
 local f = CreateFrame('Frame')
 f:SetScript("OnEvent", function(self, event, ...)
@@ -21,7 +22,19 @@ function ns:ADDON_LOADED(event, name)
             minimap = false,
         },
     })
+    _G[myname.."DBPC"] = setmetatable(_G[myname.."DBPC"] or {}, {
+        __index = {
+            -- nothing right now
+        },
+    })
     db = _G[myname.."DB"]
+    dbpc = _G[myname.."DBPC"]
+    if not dbpc.log then
+        dbpc.log = {}
+    end
+
+    ns.db = db
+    ns.dbpc = dbpc
 
     if icon then
         icon:Register(myname, ns.dataobject, db)
@@ -57,6 +70,7 @@ do
 end
 
 local quest_names = {}
+ns.quest_names = quest_names
 do
     local tooltip
     local function tooltip_line(link, line)
@@ -70,7 +84,7 @@ do
         if tooltip:NumLines() < line then return false end
         return _G[myname.."_TooltipTextLeft"..line]:GetText()
     end
-    quest_names = setmetatable({}, {__index = function(self, key)
+    setmetatable(ns.quest_names, {__index = function(self, key)
         local link = (type(key) == 'string') and key or ('quest:'..key)
         local uid = string.match(link, '%d+')
         local name = tooltip_line(link, 1)
@@ -92,14 +106,16 @@ function ns:CheckQuests()
             local mapFile, _, _, isMicroDungeon, microDungeon = GetMapInfo()
             local x, y = GetPlayerMapPosition("player")
             local questName = quest_names[questid] -- prime it
-            table.insert(quests_completed, {
+            local quest = {
                 id = questid,
                 time = time(),
                 map = microDungeon or mapFile or UNKNOWN,
                 x = x or 0,
                 y = y or 0,
                 level = GetCurrentMapDungeonLevel() or -1,
-            })
+            }
+            table.insert(quests_completed, quest)
+            table.insert(dbpc.log, quest)
         end
     end
     quests = new_quests
@@ -115,14 +131,16 @@ local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject
 dataobject.OnClick = function(frame, button)
     if button == "RightButton" then
         -- clear the list!
-        quests_completed = {}
+        table.wipe(quests_completed)
+    else
+        ns:ShowLog()
     end
 end
 
 dataobject.OnTooltipShow = function(tooltip)
     ns:CheckQuests() -- in case
     tooltip:AddLine("QuestsChanged")
-    for _, quest in ipairs(quests_completed) do
+    for _, quest in ipairs(ns.quests_completed) do
         tooltip:AddDoubleLine(
             ("%d: %s"):format(quest.id, quest_names[quest.id] or UNKNOWN),
             ("%s (%d) %.2f, %.2f"):format(quest.map, quest.level, quest.x * 100, quest.y * 100)
@@ -132,6 +150,7 @@ dataobject.OnTooltipShow = function(tooltip)
     local mapFile, _, _, isMicroDungeon, microDungeon = GetMapInfo()
     local x, y = GetPlayerMapPosition("player")
     tooltip:AddDoubleLine("Location", ("%s (%d) %.2f, %.2f"):format(microDungeon or mapFile or UNKNOWN, GetCurrentMapDungeonLevel() or -1, (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
+    tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
 
