@@ -72,7 +72,7 @@ function ns:RefreshLog()
 
     log:AddLine("QuestsChanged")
 
-    for i = log.offset, math.min(#ns.dbpc.log, log.offset + PAGESIZE) do
+    for i = log.offset, math.min(#ns.dbpc.log, log.offset + PAGESIZE - 1) do
         local quest = ns.dbpc.log[i]
         if quest then
             log:AddDoubleLine(
