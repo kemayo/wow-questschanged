@@ -160,11 +160,16 @@ ns.dataobject = dataobject
 
 _G["SLASH_".. myname:upper().."1"] = "/questschanged"
 SlashCmdList[myname:upper()] = function(msg)
-    if not icon then return end
-    db.hide = not db.hide
-    if db.hide then
-        icon:Hide(myname)
-    else
-        icon:Show(myname)
+    msg = msg:trim()
+    if msg == "log" or msg == "" then
+        ns:ShowLog()
+    elseif msg == "icon" then
+        if not icon then return end
+        db.hide = not db.hide
+        if db.hide then
+            icon:Hide(myname)
+        else
+            icon:Show(myname)
+        end
     end
 end
