@@ -1,10 +1,10 @@
-## Interface: 70100
+## Interface: 80000
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
 ## Version: @project-version@
 ## LoadOnDemand: 0
-## OptionalDeps: tekDebug
+## OptionalDeps: tekDebug, LibDBIcon-1.0
 
 ## SavedVariables: QuestsChangedDB
 ## SavedVariablesPerCharacter: QuestsChangedDBPC

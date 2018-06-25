@@ -100,19 +100,21 @@ function ns:CheckQuests()
     if not quests then
         return
     end
+    local mapdata, x, y
     local new_quests = GetQuestsCompleted()
     for questid in pairs(new_quests) do
         if not quests[questid] then
-            local mapFile, _, _, isMicroDungeon, microDungeon = GetMapInfo()
-            local x, y = GetPlayerMapPosition("player")
+            if not mapdata then
+                mapdata = C_Map.GetMapInfo(C_Map.GetBestMapForUnit('player'))
+                x, y = C_Map.GetPlayerMapPosition(mapID, 'player'):GetXY()
+            end
             local questName = quest_names[questid] -- prime it
             local quest = {
                 id = questid,
                 time = time(),
-                map = microDungeon or mapFile or UNKNOWN,
+                map = mapdata.mapID,
                 x = x or 0,
                 y = y or 0,
-                level = GetCurrentMapDungeonLevel() or -1,
             }
             table.insert(quests_completed, quest)
             table.insert(dbpc.log, quest)
@@ -147,9 +149,13 @@ dataobject.OnTooltipShow = function(tooltip)
         )
     end
 
-    local mapFile, _, _, isMicroDungeon, microDungeon = GetMapInfo()
-    local x, y = GetPlayerMapPosition("player")
-    tooltip:AddDoubleLine("Location", ("%s (%d) %.2f, %.2f"):format(microDungeon or mapFile or UNKNOWN, GetCurrentMapDungeonLevel() or -1, (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
+    local mapID = C_Map.GetBestMapForUnit('player')
+    local x, y = C_Map.GetPlayerMapPosition(mapID, 'player'):GetXY()
+    local mapname, subname = ns.MapNameFromID(mapID)
+
+    -- TODO: check microdungeons here
+
+    tooltip:AddDoubleLine("Location", ("%s (%s) %.2f, %.2f"):format(mapID or UNKNOWN, mapname .. (subname and (' / ' .. subname) or ''), (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
     tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
@@ -172,4 +178,20 @@ SlashCmdList[myname:upper()] = function(msg)
             icon:Show(myname)
         end
     end
+end
+
+-- utility
+
+function ns.MapNameFromID(mapID)
+    local mapdata = C_Map.GetMapInfo(mapID)
+    local groupID = C_Map.GetMapGroupID(mapID)
+    if group then
+        local groupdata = C_Map.GetMapGroupMembersInfo(groupID)
+        for _, subzonedata in ipairs(groupdata) do
+            if subzonedata.mapID == mapID then
+                return mapdata.name, subzonedata.name
+            end
+        end
+    end
+    return mapdata.name
 end
