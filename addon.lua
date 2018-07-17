@@ -106,7 +106,7 @@ function ns:CheckQuests()
         if not quests[questid] then
             if not mapdata then
                 mapdata = C_Map.GetMapInfo(C_Map.GetBestMapForUnit('player'))
-                x, y = C_Map.GetPlayerMapPosition(mapID, 'player'):GetXY()
+                x, y = C_Map.GetPlayerMapPosition(mapdata.mapID, 'player'):GetXY()
             end
             local questName = quest_names[questid] -- prime it
             local quest = {
