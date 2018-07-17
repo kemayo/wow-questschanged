@@ -96,7 +96,7 @@ function ns:RefreshLog()
 end
 
 local function ClickSound(self)
-    PlaySound("igMainMenuOptionCheckBoxOn")
+    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 end
 
 function ns.CreatePageButton(parent, type)
