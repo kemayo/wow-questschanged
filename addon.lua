@@ -153,7 +153,11 @@ dataobject.OnTooltipShow = function(tooltip)
     end
 
     local mapID = C_Map.GetBestMapForUnit('player')
-    local x, y = C_Map.GetPlayerMapPosition(mapID, 'player'):GetXY()
+    local position = C_Map.GetPlayerMapPosition(mapID, 'player')
+    local x, y
+    if position then
+        x, y = position:GetXY()
+    end
     local mapname, subname = ns.MapNameFromID(mapID)
 
     -- TODO: check microdungeons here
