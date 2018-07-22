@@ -146,9 +146,17 @@ dataobject.OnTooltipShow = function(tooltip)
     ns:CheckQuests() -- in case
     tooltip:AddLine("QuestsChanged")
     for _, quest in ipairs(ns.quests_completed) do
+        local map, level
+        if type(quest.map) == 'string' then
+            -- pre-8.0 quest logging has mapFiles, just show them
+            map = quest.map
+            level = quest.level
+        else
+            map, level = ns.MapNameFromID(quest.map)
+        end
         tooltip:AddDoubleLine(
             ("%d: %s"):format(quest.id, quest_names[quest.id] or UNKNOWN),
-            ("%s (%d) %.2f, %.2f"):format(quest.map, quest.level, quest.x * 100, quest.y * 100)
+            ("%s (%s) %.2f, %.2f"):format(quest.map, map .. (level and (' / ' .. level) or ''), quest.x * 100, quest.y * 100)
         )
     end
 
