@@ -105,17 +105,20 @@ function ns:CheckQuests()
     for questid in pairs(new_quests) do
         if not quests[questid] then
             if not mapdata then
-                mapdata = C_Map.GetMapInfo(C_Map.GetBestMapForUnit('player'))
-                local position = C_Map.GetPlayerMapPosition(mapdata.mapID, 'player')
-                if position then
-                    x, y = position:GetXY()
+                local mapID = C_Map.GetBestMapForUnit('player')
+                if mapID then
+                    mapdata = C_Map.GetMapInfo(mapID)
+                    local position = C_Map.GetPlayerMapPosition(mapdata.mapID, 'player')
+                    if position then
+                        x, y = position:GetXY()
+                    end
                 end
             end
             local questName = quest_names[questid] -- prime it
             local quest = {
                 id = questid,
                 time = time(),
-                map = mapdata.mapID,
+                map = mapdata and mapdata.mapID or 0,
                 x = x or 0,
                 y = y or 0,
             }
@@ -160,11 +163,13 @@ dataobject.OnTooltipShow = function(tooltip)
         )
     end
 
-    local mapID = C_Map.GetBestMapForUnit('player')
-    local position = C_Map.GetPlayerMapPosition(mapID, 'player')
     local x, y
-    if position then
-        x, y = position:GetXY()
+    local mapID = C_Map.GetBestMapForUnit('player')
+    if mapID then
+        local position = C_Map.GetPlayerMapPosition(mapID, 'player')
+        if position then
+            x, y = position:GetXY()
+        end
     end
     local mapname, subname = ns.MapNameFromID(mapID)
 
@@ -198,6 +203,9 @@ end
 -- utility
 
 function ns.MapNameFromID(mapID)
+    if not mapID then
+        return UNKNOWN
+    end
     local mapdata = C_Map.GetMapInfo(mapID)
     local groupID = C_Map.GetMapGroupID(mapID)
     if group then
