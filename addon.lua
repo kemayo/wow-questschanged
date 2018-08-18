@@ -3,7 +3,8 @@ local myname, ns = ...
 local icon = LibStub("LibDBIcon-1.0", true)
 
 local db, dbpc
-local quests
+local quests = {}
+local new_quests = {}
 local quests_completed = {}
 ns.quests_completed = quests_completed
 
@@ -49,7 +50,7 @@ function ns:PLAYER_LOGIN()
     f:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
     f:UnregisterEvent("PLAYER_LOGIN")
 
-    quests = GetQuestsCompleted()
+    quests = GetQuestsCompleted(quests)
 end
 function ns:QUEST_LOG_UPDATE()
     f:Show()
@@ -101,7 +102,7 @@ function ns:CheckQuests()
         return
     end
     local mapdata, x, y
-    local new_quests = GetQuestsCompleted()
+    new_quests = GetQuestsCompleted(new_quests)
     for questid in pairs(new_quests) do
         if not quests[questid] then
             if not mapdata then
@@ -126,7 +127,10 @@ function ns:CheckQuests()
             table.insert(dbpc.log, quest)
         end
     end
-    quests = new_quests
+    -- Swap `quests` and `new_quests` so we can hold on to the old `quests` and reuse the table on the next scan
+    local temp = new_quests
+    new_quests = quests
+    quests = temp
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
