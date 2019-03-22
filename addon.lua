@@ -211,8 +211,11 @@ function ns.MapNameFromID(mapID)
         return UNKNOWN
     end
     local mapdata = C_Map.GetMapInfo(mapID)
+    if not mapdata then
+        return UNKNOWN
+    end
     local groupID = C_Map.GetMapGroupID(mapID)
-    if group then
+    if groupID then
         local groupdata = C_Map.GetMapGroupMembersInfo(groupID)
         for _, subzonedata in ipairs(groupdata) do
             if subzonedata.mapID == mapID then
