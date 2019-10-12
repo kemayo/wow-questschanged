@@ -1,51 +1,104 @@
 local myname, ns = ...
 
-local PAGESIZE = 20
-local log
+local floor = math.floor
+local PAGESIZE = 13
+local log, copybox
 function ns:ShowLog()
     if not log then
-        log = CreateFrame("GameTooltip", "QuestsChangedLogTooltip", UIParent, "GameTooltipTemplate")
-
-        log:RegisterForDrag("LeftButton")
+        log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
         log:EnableMouse(true)
         log:SetMovable(true)
         log:SetClampedToScreen(true)
         log:SetFrameStrata("DIALOG")
+        log:SetSize(600, 500)
+        log:SetPoint("TOP", 0, -80)
         log:Hide()
 
-        log:SetPoint("TOP", 0, -80)
+        log.Title:SetText("QuestsChanged")
 
-        log:SetScript("OnDragStart", function(self) self:StartMoving() end)
-        log:SetScript("OnDragStop", function(self)
-            self:StopMovingOrSizing()
-            ValidateFramePosition(self)
-        end)
+        local drag = CreateFrame("Frame", "$parentTitleButton", log, "TitleDragAreaTemplate")
+        drag:SetPoint("TOPLEFT", _G["QuestsChangedFrameTitleBG"])
+        drag:SetPoint("BOTTOMRIGHT", _G["QuestsChangedFrameTitleBG"])
 
-        log:SetPadding(0, 24) -- width, height
-        local close = ns.CreateCloseButton(log)
-        close:SetPoint("TOPRIGHT", 1, 1)
-        close:SetScript("OnClick", function(self)
-            HideUIPanel(log)
-        end)
+        local function Line_OnEnter(self)
+            local index = #ns.dbpc.log - log.offset - (self.index - 1)
+            local quest = ns.dbpc.log[index]
+            if quest then
+                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+                GameTooltip:AddLine(ns.quest_names[quest.id] or UNKNOWN)
+                GameTooltip:AddDoubleLine("id", quest.id)
+                GameTooltip:AddDoubleLine("map", quest.map)
+                if quest.level then
+                    -- pre-8.0
+                    GameTooltip:AddDoubleLine("level", quest.level)
+                end
+                GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
+                GameTooltip:AddDoubleLine("time", quest.time)
+                GameTooltip:Show()
+            end
+        end
+
+        local function Line_OnClick(self)
+            local index = #ns.dbpc.log - log.offset - (self.index - 1)
+            local quest = ns.dbpc.log[index]
+
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, quest)
+        end
+
+        log.lines = {}
+        for i = 1, PAGESIZE do
+            local height = 32
+            local line = CreateFrame("Button", nil, log)
+            line:SetHeight(height)
+            line:SetPoint("TOPLEFT", 12, -((height * i)))
+            line:SetPoint("RIGHT", -12, 0)
+            line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+
+            line.title = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightLeft")
+            line.title:SetPoint("TOPLEFT")
+            line.title:SetPoint("TOPRIGHT", line, "TOPLEFT", 260, 0)
+            line.title:SetPoint("BOTTOM", 0, 16)
+            line.time = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.time:SetPoint("TOPRIGHT")
+            line.time:SetPoint("TOPLEFT", line, "TOPRIGHT", -100, 0)
+            line.time:SetPoint("BOTTOM", 0, 16)
+            line.location = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.location:SetPoint("TOPRIGHT", line.time, "TOPLEFT")
+            line.location:SetPoint("TOPLEFT", line.title, "TOPRIGHT")
+            line.location:SetPoint("BOTTOM", 0, 16)
+            line.coords = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.coords:SetPoint("TOPLEFT", line.location, "BOTTOMLEFT")
+            line.coords:SetPoint("TOPRIGHT", line.location, "BOTTOMRIGHT")
+            line.coords:SetPoint("BOTTOM")
+
+            line:SetScript("OnEnter", Line_OnEnter)
+            line:SetScript("OnLeave", GameTooltip_Hide)
+            line:SetScript("OnClick", Line_OnClick)
+
+            line.index = i
+
+            log.lines[i] = line
+        end
+
         local nextpage = ns.CreatePageButton(log, "Next")
-        nextpage:SetPoint("BOTTOMRIGHT", -40, 2)
+        nextpage:SetPoint("BOTTOMRIGHT", -40, 6)
         nextpage:SetScript("OnClick", function(self)
             log.offset = log.offset + PAGESIZE
             ns:RefreshLog()
         end)
         log.nextpage = nextpage
         local prevpage = ns.CreatePageButton(log, "Prev")
-        prevpage:SetPoint("BOTTOMLEFT", 40, 2)
+        prevpage:SetPoint("BOTTOMLEFT", 40, 6)
         prevpage:SetScript("OnClick", function(self)
-            log.offset = math.max(1, log.offset - PAGESIZE)
+            log.offset = math.max(0, log.offset - PAGESIZE)
             ns:RefreshLog()
         end)
         log.prevpage = prevpage
 
         log.page = log:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-        log.page:SetPoint("BOTTOM", 0, 12)
+        log.page:SetPoint("BOTTOM", 0, 16)
 
-        log.offset = 1 + PAGESIZE * math.floor(#ns.dbpc.log / PAGESIZE)
+        log.offset = 0
     end
 
     ShowUIPanel(log)
@@ -57,23 +110,23 @@ function ns:ShowLog()
 end
 
 function ns:RefreshLog()
-    log:ClearLines()
+    local size = #ns.dbpc.log
 
-    if log.offset == 1 then
+    if log.offset == 0 then
         log.prevpage:Disable()
     else
         log.prevpage:Enable()
     end
-    if (log.offset + PAGESIZE + 1) > #ns.dbpc.log then
+    if (log.offset + PAGESIZE) >= size then
         log.nextpage:Disable()
     else
         log.nextpage:Enable()
     end
 
-    log:AddLine("QuestsChanged")
-
-    for i = log.offset, math.min(#ns.dbpc.log, log.offset + PAGESIZE - 1) do
-        local quest = ns.dbpc.log[i]
+    for i = 1, math.min(size, PAGESIZE) do
+        -- Reverse-order, so offset=0 should get us the final row in log
+        local index = size - log.offset - (i - 1)
+        local quest = ns.dbpc.log[index]
         if quest then
             local map, level
             if type(quest.map) == 'string' then
@@ -83,14 +136,17 @@ function ns:RefreshLog()
             else
                 map, level = ns.MapNameFromID(quest.map)
             end
-            log:AddDoubleLine(
-                ("%d: %s"):format(quest.id, ns.quest_names[quest.id] or UNKNOWN),
-                ("%s (%s) %.2f, %.2f"):format(quest.map, map .. (level and (' / ' .. level) or ''), quest.x * 100, quest.y * 100)
-            )
+            log.lines[i].title:SetFormattedText("%d: %s", quest.id, ns.quest_names[quest.id] or UNKNOWN)
+            log.lines[i].location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
+            log.lines[i].coords:SetFormattedText("%.2f, %.2f", quest.x * 100, quest.y * 100)
+            log.lines[i].time:SetText(ns.FormatLastSeen(quest.time))
+            log.lines[i]:Show()
+        else
+            log.lines[i]:Hide()
         end
     end
 
-    log.page:SetFormattedText(MERCHANT_PAGE_NUMBER, math.ceil(log.offset / PAGESIZE), math.ceil(#ns.dbpc.log / PAGESIZE))
+    log.page:SetFormattedText(MERCHANT_PAGE_NUMBER, math.ceil(log.offset / PAGESIZE) + 1, math.ceil(#ns.dbpc.log / PAGESIZE))
 
     log:Show()
 end
@@ -115,15 +171,19 @@ function ns.CreatePageButton(parent, type)
     return button
 end
 
-function ns.CreateCloseButton(parent)
-    local close = CreateFrame("Button", nil, parent)
-    close:SetSize(32, 32)
-
-    close:SetNormalTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Up]])
-    close:SetPushedTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Down]])
-    close:SetHighlightTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]], "ADD")
-
-    close:HookScript("OnClick", ClickSound)
-
-    return close
+function ns.FormatLastSeen(t)
+    t = tonumber(t)
+    if not t or t == 0 then return NEVER end
+    local currentTime = time()
+    local minutes = floor(((currentTime - t) / 60) + 0.5)
+    if minutes > 119 then
+        local hours = floor(((currentTime - t) / 3600) + 0.5)
+        if hours > 23 then
+            return floor(((currentTime - t) / 86400) + 0.5).." day(s)"
+        else
+            return hours.." hour(s)"
+        end
+    else
+        return minutes.." minute(s)"
+    end
 end

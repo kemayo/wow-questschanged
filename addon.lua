@@ -152,7 +152,11 @@ dataobject.OnClick = function(frame, button)
         -- clear the list!
         table.wipe(quests_completed)
     else
-        ns:ShowLog()
+        if IsShiftKeyDown() then
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, dbpc.log[#dbpc.log])
+        else
+            ns:ShowLog()
+        end
     end
 end
 
@@ -184,10 +188,9 @@ dataobject.OnTooltipShow = function(tooltip)
     end
     local mapname, subname = ns.MapNameFromID(mapID)
 
-    -- TODO: check microdungeons here
-
     tooltip:AddDoubleLine("Location", ("%s (%s) %.2f, %.2f"):format(mapID or UNKNOWN, mapname .. (subname and (' / ' .. subname) or ''), (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
     tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
+    tooltip:AddLine("Shift-left-click to get a copy of the last quest for handynotes", 0, 1, 1)
     tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
 end
 
@@ -232,3 +235,22 @@ function ns.MapNameFromID(mapID)
     end
     return mapdata.name
 end
+
+StaticPopupDialogs["QUESTSCHANGED_COPYBOX"] = {
+    text = "Copy me",
+    hasEditBox = true,
+    hideOnEscape = true,
+    whileDead = true,
+    closeButton = true,
+    editBoxWidth = 350,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide();
+    end,
+    OnShow = function(self, data)
+        self.editBox:SetText(("[%d%d] = {quest=%d, label=\"\"},"):format(
+            floor(data.x * 10000), floor(data.y * 10000),
+            data.id
+        ))
+        self.editBox:HighlightText()
+    end,
+}
