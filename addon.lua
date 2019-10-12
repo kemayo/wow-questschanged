@@ -9,6 +9,11 @@ local session_quests = {}
 local quests_completed = {}
 ns.quests_completed = quests_completed
 
+local SPAM_QUESTS = {
+    [32468] = true, -- Crystal Clarity
+    [32469] = true, -- Crystal Clarity
+}
+
 local f = CreateFrame('Frame')
 f:SetScript("OnEvent", function(self, event, ...)
     ns[event](ns, event, ...)
@@ -105,7 +110,7 @@ function ns:CheckQuests()
     local mapdata, x, y
     new_quests = GetQuestsCompleted(new_quests)
     for questid in pairs(new_quests) do
-        if not quests[questid] and not session_quests[questid] then
+        if not quests[questid] and not session_quests[questid] and not SPAM_QUESTS[questid] then
             if not mapdata then
                 local mapID = C_Map.GetBestMapForUnit('player')
                 if mapID then
