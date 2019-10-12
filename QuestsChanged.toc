@@ -1,4 +1,4 @@
-## Interface: 80100
+## Interface: 80205
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
