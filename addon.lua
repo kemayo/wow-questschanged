@@ -58,7 +58,10 @@ function ns:PLAYER_LOGIN()
     f:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
     f:UnregisterEvent("PLAYER_LOGIN")
 
-    quests = GetQuestsCompleted(quests)
+    new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
+    for _, questid in pairs(new_quests) do
+        quests[questid] = true
+    end
 end
 function ns:QUEST_LOG_UPDATE()
     f:Show()
@@ -110,8 +113,8 @@ function ns:CheckQuests()
         return
     end
     local mapdata, x, y
-    new_quests = GetQuestsCompleted(new_quests)
-    for questid in pairs(new_quests) do
+    new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
+    for _, questid in pairs(new_quests) do
         if not quests[questid] and not session_quests[questid] and not SPAM_QUESTS[questid] then
             if not mapdata then
                 local mapID = C_Map.GetBestMapForUnit('player')
@@ -139,11 +142,8 @@ function ns:CheckQuests()
                 ns.Print("Quest complete:", questid, questName or UNKNOWN)
             end
         end
+        quests[questid] = true
     end
-    -- Swap `quests` and `new_quests` so we can hold on to the old `quests` and reuse the table on the next scan
-    local temp = new_quests
-    new_quests = quests
-    quests = temp
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
