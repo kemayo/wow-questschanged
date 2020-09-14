@@ -83,29 +83,17 @@ end
 
 local quest_names = {}
 ns.quest_names = quest_names
-do
-    local tooltip
-    local function tooltip_line(link, line)
-        if not tooltip then
-            tooltip = CreateFrame("GameTooltip", myname.."_Tooltip", nil, "GameTooltipTemplate")
-            tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-        end
-        tooltip:ClearLines()
-        tooltip:SetHyperlink(link)
-
-        if tooltip:NumLines() < line then return false end
-        return _G[myname.."_TooltipTextLeft"..line]:GetText()
+setmetatable(ns.quest_names, {__index = function(self, key)
+    local name = C_QuestLog.GetTitleForQuestID(key)
+    if name then
+        self[key] = name
+        return name
     end
-    setmetatable(ns.quest_names, {__index = function(self, key)
-        local link = (type(key) == 'string') and key or ('quest:'..key)
-        local uid = string.match(link, '%d+')
-        local name = tooltip_line(link, 1)
-        if name then
-            self[uid] = name
-            return name
-        end
-        return false
-    end,})
+    return false
+end,})
+
+function QuestsChangedGetQuestTitle(id)
+    return ns.quest_names[id]
 end
 
 function ns:CheckQuests()
