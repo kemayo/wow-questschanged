@@ -1,4 +1,5 @@
 local myname, ns = ...
+local myfullname = GetAddOnMetadata(myname, "Title")
 
 local icon = LibStub("LibDBIcon-1.0", true)
 
@@ -27,6 +28,7 @@ function ns:ADDON_LOADED(event, name)
     _G[myname.."DB"] = setmetatable(_G[myname.."DB"] or {}, {
         __index = {
             minimap = false,
+            announce = false,
         },
     })
     _G[myname.."DBPC"] = setmetatable(_G[myname.."DBPC"] or {}, {
@@ -87,7 +89,7 @@ do
         end
         tooltip:ClearLines()
         tooltip:SetHyperlink(link)
-        
+
         if tooltip:NumLines() < line then return false end
         return _G[myname.."_TooltipTextLeft"..line]:GetText()
     end
@@ -132,6 +134,10 @@ function ns:CheckQuests()
             table.insert(quests_completed, quest)
             table.insert(dbpc.log, quest)
             session_quests[questid] = true
+
+            if db.announce then
+                ns.Print("Quest complete:", questid, questName or UNKNOWN)
+            end
         end
     end
     -- Swap `quests` and `new_quests` so we can hold on to the old `quests` and reuse the table on the next scan
@@ -211,10 +217,16 @@ SlashCmdList[myname:upper()] = function(msg)
         else
             icon:Show(myname)
         end
+        ns.Print("icon", db.hide and "hidden" or "shown")
+    elseif msg == "announce" then
+        db.announce = not db.announce
+        ns.Print("announce in chat", db.announce and "enabled" or "disabled")
     end
 end
 
 -- utility
+
+function ns.Print(...) print("|cFF33FF99".. myfullname.. "|r:", ...) end
 
 function ns.MapNameFromID(mapID)
     if not mapID then
