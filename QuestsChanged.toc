@@ -1,10 +1,11 @@
-## Interface: 90001
+## Interface: 90002
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
 ## Version: @project-version@
 ## LoadOnDemand: 0
 ## OptionalDeps: tekDebug, LibDBIcon-1.0
+## X-Curse-Project-ID: 86759
 
 ## SavedVariables: QuestsChangedDB
 ## SavedVariablesPerCharacter: QuestsChangedDBPC
