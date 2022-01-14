@@ -132,6 +132,18 @@ function ns:CheckQuests()
         end
         quests[questid] = true
     end
+    self:RefreshLog()
+end
+
+function ns:RemoveQuest(index)
+    if index == 0 then
+        table.wipe(quests_completed)
+        table.wipe(dbpc.log)
+    else
+        tremove(quests_completed,index)
+        tremove(dbpc.log,index)
+    end
+    ns:RefreshLog()
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
@@ -144,12 +156,12 @@ local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject
 dataobject.OnClick = function(frame, button)
     if button == "RightButton" then
         -- clear the list!
-        table.wipe(quests_completed)
+        ns:RemoveQuest(0)
     else
         if IsShiftKeyDown() then
             StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, dbpc.log[#dbpc.log])
         else
-            ns:ShowLog()
+            ns:ToggleLog()
         end
     end
 end
@@ -244,13 +256,19 @@ StaticPopupDialogs["QUESTSCHANGED_COPYBOX"] = {
     closeButton = true,
     editBoxWidth = 350,
     EditBoxOnEscapePressed = function(self)
-        self:GetParent():Hide();
+        self:GetParent():Hide()
+    end,
+    button1 = "Done",
+    OnButton1 = function(self, data)
+        return false
     end,
     OnShow = function(self, data)
-        self.editBox:SetText(("[%d%d] = {quest=%d, label=\"\"},"):format(
-            floor(data.x * 10000), floor(data.y * 10000),
-            data.id
-        ))
-        self.editBox:HighlightText()
+        if data then
+            self.editBox:SetText(("[%d%d] = {quest=%d, label=\"\"},"):format(
+                floor((data.x or 0) * 10000), floor((data.y or 0) * 10000),
+                (data.id or nil)
+            ))
+            self.editBox:HighlightText()
+        end
     end,
 }
