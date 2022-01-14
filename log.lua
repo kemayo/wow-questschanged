@@ -1,7 +1,7 @@
 local myname, ns = ...
 
 local floor = math.floor
-local PAGESIZE = 13
+local PAGESIZE, lastSize = 13, 0
 local log, copybox
 function ns:BuildLog()
     log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
