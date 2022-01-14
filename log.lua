@@ -157,7 +157,7 @@ function ns:RefreshLog()
         end
     end
 
-    log.page:SetFormattedText(MERCHANT_PAGE_NUMBER, math.ceil(log.offset / PAGESIZE) + 1, math.ceil(#ns.dbpc.log / PAGESIZE))
+    log.page:SetFormattedText(MERCHANT_PAGE_NUMBER, math.ceil(log.offset / PAGESIZE) + 1, math.ceil(size / PAGESIZE))
     lastSize = size
 end
 
