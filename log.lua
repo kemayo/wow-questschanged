@@ -3,114 +3,125 @@ local myname, ns = ...
 local floor = math.floor
 local PAGESIZE = 13
 local log, copybox
-function ns:ShowLog()
-    if not log then
-        log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
-        log:EnableMouse(true)
-        log:SetMovable(true)
-        log:SetClampedToScreen(true)
-        log:SetFrameStrata("DIALOG")
-        log:SetSize(600, 500)
-        log:SetPoint("TOP", 0, -80)
-        log:Hide()
+function ns:BuildLog()
+    log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
+    log:EnableMouse(true)
+    log:SetMovable(true)
+    log:SetClampedToScreen(true)
+    log:SetFrameStrata("DIALOG")
+    log:SetSize(600, 500)
+    log:SetPoint("TOP", 0, -80)
+    log:Hide()
 
-        log.Title:SetText("QuestsChanged")
+    log.Title:SetText("QuestsChanged")
 
-        local drag = CreateFrame("Frame", "$parentTitleButton", log, "TitleDragAreaTemplate")
-        drag:SetPoint("TOPLEFT", _G["QuestsChangedFrameTitleBG"])
-        drag:SetPoint("BOTTOMRIGHT", _G["QuestsChangedFrameTitleBG"])
+    local drag = CreateFrame("Frame", "$parentTitleButton", log, "TitleDragAreaTemplate")
+    drag:SetPoint("TOPLEFT", _G["QuestsChangedFrameTitleBG"])
+    drag:SetPoint("BOTTOMRIGHT", _G["QuestsChangedFrameTitleBG"])
 
-        local function Line_OnEnter(self)
-            local index = #ns.dbpc.log - log.offset - (self.index - 1)
-            local quest = ns.dbpc.log[index]
-            if quest then
-                GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-                GameTooltip:AddLine(ns.quest_names[quest.id] or UNKNOWN)
-                GameTooltip:AddDoubleLine("id", quest.id)
-                GameTooltip:AddDoubleLine("map", quest.map)
-                if quest.level then
-                    -- pre-8.0
-                    GameTooltip:AddDoubleLine("level", quest.level)
+    local function Line_OnEnter(self)
+        local index = #ns.dbpc.log - log.offset - (self.index - 1)
+        local quest = ns.dbpc.log[index]
+        if quest then
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:AddLine(ns.quest_names[quest.id] or UNKNOWN)
+        GameTooltip:AddDoubleLine("id", quest.id)
+        GameTooltip:AddDoubleLine("map", quest.map)
+        if quest.level then
+            -- pre-8.0
+            GameTooltip:AddDoubleLine("level", quest.level)
+        end
+        GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
+        GameTooltip:AddDoubleLine("time", quest.time)
+        GameTooltip:Show()
+        end
+    end
+
+    local function Line_OnClick(self,button,down)
+        local index = #ns.dbpc.log - log.offset - (self.index - 1)
+        local quest = ns.dbpc.log[index]
+        if button == "RightButton" then
+            ns:RemoveQuest(index)
+        elseif IsShiftKeyDown() then
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, quest)
+        else
+            if quest and quest.map and quest.x and quest.y then
+                local m = tonumber(quest.map)
+                if C_Map.CanSetUserWaypointOnMap(m) then
+                    if C_Map.HasUserWaypoint() then
+                        C_Map.ClearUserWaypoint()
+                    end
+                    local p = UiMapPoint.CreateFromCoordinates(m,quest.x,quest.y)
+                    C_Map.SetUserWaypoint(p)
+                    OpenWorldMap(m)
                 end
-                GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
-                GameTooltip:AddDoubleLine("time", quest.time)
-                GameTooltip:Show()
             end
         end
-
-        local function Line_OnClick(self)
-            local index = #ns.dbpc.log - log.offset - (self.index - 1)
-            local quest = ns.dbpc.log[index]
-
-            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, quest)
-        end
-
-        log.lines = {}
-        for i = 1, PAGESIZE do
-            local height = 32
-            local line = CreateFrame("Button", nil, log)
-            line:SetHeight(height)
-            line:SetPoint("TOPLEFT", 12, -((height * i)))
-            line:SetPoint("RIGHT", -12, 0)
-            line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
-
-            line.title = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightLeft")
-            line.title:SetPoint("TOPLEFT")
-            line.title:SetPoint("TOPRIGHT", line, "TOPLEFT", 260, 0)
-            line.title:SetPoint("BOTTOM", 0, 16)
-            line.time = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
-            line.time:SetPoint("TOPRIGHT")
-            line.time:SetPoint("TOPLEFT", line, "TOPRIGHT", -100, 0)
-            line.time:SetPoint("BOTTOM", 0, 16)
-            line.location = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
-            line.location:SetPoint("TOPRIGHT", line.time, "TOPLEFT")
-            line.location:SetPoint("TOPLEFT", line.title, "TOPRIGHT")
-            line.location:SetPoint("BOTTOM", 0, 16)
-            line.coords = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
-            line.coords:SetPoint("TOPLEFT", line.location, "BOTTOMLEFT")
-            line.coords:SetPoint("TOPRIGHT", line.location, "BOTTOMRIGHT")
-            line.coords:SetPoint("BOTTOM")
-
-            line:SetScript("OnEnter", Line_OnEnter)
-            line:SetScript("OnLeave", GameTooltip_Hide)
-            line:SetScript("OnClick", Line_OnClick)
-
-            line.index = i
-
-            log.lines[i] = line
-        end
-
-        local nextpage = ns.CreatePageButton(log, "Next")
-        nextpage:SetPoint("BOTTOMRIGHT", -40, 6)
-        nextpage:SetScript("OnClick", function(self)
-            log.offset = log.offset + PAGESIZE
-            ns:RefreshLog()
-        end)
-        log.nextpage = nextpage
-        local prevpage = ns.CreatePageButton(log, "Prev")
-        prevpage:SetPoint("BOTTOMLEFT", 40, 6)
-        prevpage:SetScript("OnClick", function(self)
-            log.offset = math.max(0, log.offset - PAGESIZE)
-            ns:RefreshLog()
-        end)
-        log.prevpage = prevpage
-
-        log.page = log:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-        log.page:SetPoint("BOTTOM", 0, 16)
-
-        log.offset = 0
     end
 
-    ShowUIPanel(log)
-    if not log:IsShown() then
-        log:SetOwner(UIParent, "ANCHOR_PRESERVE")
+    log.lines = {}
+    for i = 1, PAGESIZE do
+        local height = 32
+        local line = CreateFrame("Button", nil, log)
+        line:SetHeight(height)
+        line:SetPoint("TOPLEFT", 12, -((height * i)))
+        line:SetPoint("RIGHT", -12, 0)
+        line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+        line:GetHighlightTexture():SetTexCoord(0.2, 0.8, 0.2, 0.8)
+        line:GetHighlightTexture():SetAlpha(0.5)
+
+        line.title = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightLeft")
+        line.title:SetPoint("TOPLEFT")
+        line.title:SetPoint("TOPRIGHT", line, "TOPLEFT", 260, 0)
+        line.title:SetPoint("BOTTOM", 0, 16)
+        line.time = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+        line.time:SetPoint("TOPRIGHT")
+        line.time:SetPoint("TOPLEFT", line, "TOPRIGHT", -100, 0)
+        line.time:SetPoint("BOTTOM", 0, 16)
+        line.location = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+        line.location:SetPoint("TOPRIGHT", line.time, "TOPLEFT")
+        line.location:SetPoint("TOPLEFT", line.title, "TOPRIGHT")
+        line.location:SetPoint("BOTTOM", 0, 16)
+        line.coords = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+        line.coords:SetPoint("TOPLEFT", line.location, "BOTTOMLEFT")
+        line.coords:SetPoint("TOPRIGHT", line.location, "BOTTOMRIGHT")
+        line.coords:SetPoint("BOTTOM")
+
+        line:SetScript("OnEnter", Line_OnEnter)
+        line:SetScript("OnLeave", GameTooltip_Hide)
+        line:SetScript("OnClick", Line_OnClick)
+        line:RegisterForClicks("LeftButtonUp","RightButtonUp")
+
+        line.index = i
+
+        log.lines[i] = line
     end
 
-    self:RefreshLog()
+    local nextpage = ns.CreatePageButton(log, "Next")
+    nextpage:SetPoint("BOTTOMRIGHT", -40, 6)
+    nextpage:SetScript("OnClick", function(self)
+        log.offset = log.offset + PAGESIZE
+        ns:RefreshLog()
+    end)
+    log.nextpage = nextpage
+    local prevpage = ns.CreatePageButton(log, "Prev")
+    prevpage:SetPoint("BOTTOMLEFT", 40, 6)
+    prevpage:SetScript("OnClick", function(self)
+        log.offset = math.max(0, log.offset - PAGESIZE)
+        ns:RefreshLog()
+    end)
+    log.prevpage = prevpage
+
+    log.page = log:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    log.page:SetPoint("BOTTOM", 0, 16)
+
+    log.offset = 0
 end
 
 function ns:RefreshLog()
+    if not self:LogShown() then return end
     local size = #ns.dbpc.log
+    local dirtySize = math.max(size,lastSize)
 
     if log.offset == 0 then
         log.prevpage:Disable()
@@ -123,7 +134,7 @@ function ns:RefreshLog()
         log.nextpage:Enable()
     end
 
-    for i = 1, math.min(size, PAGESIZE) do
+    for i = 1, math.min(dirtySize,PAGESIZE) do
         -- Reverse-order, so offset=0 should get us the final row in log
         local index = size - log.offset - (i - 1)
         local quest = ns.dbpc.log[index]
@@ -147,8 +158,21 @@ function ns:RefreshLog()
     end
 
     log.page:SetFormattedText(MERCHANT_PAGE_NUMBER, math.ceil(log.offset / PAGESIZE) + 1, math.ceil(#ns.dbpc.log / PAGESIZE))
+    lastSize = size
+end
 
-    log:Show()
+function ns:LogShown()
+    return log and log:IsShown()
+end
+
+function ns:ToggleLog()
+    if not log then self:BuildLog() end
+    if log:IsShown() then
+        log:Hide()
+    else
+        log:Show()
+        self:RefreshLog()
+    end
 end
 
 local function ClickSound(self)
