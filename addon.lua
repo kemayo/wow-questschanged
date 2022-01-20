@@ -7,8 +7,7 @@ local db, dbpc
 local quests = {}
 local new_quests = {}
 local session_quests = {}
-local quests_completed = {}
-ns.quests_completed = quests_completed
+ns.quests_completed = {}
 
 local SPAM_QUESTS = {
     [32468] = true, -- Crystal Clarity
@@ -81,8 +80,7 @@ do
     end)
 end
 
-local quest_names = {}
-ns.quest_names = quest_names
+ns.quest_names = {}
 setmetatable(ns.quest_names, {__index = function(self, key)
     local name = C_QuestLog.GetTitleForQuestID(key)
     if name then
@@ -114,7 +112,7 @@ function ns:CheckQuests()
                     end
                 end
             end
-            local questName = quest_names[questid] -- prime it
+            local questName = self.quest_names[questid] -- prime it
             local quest = {
                 id = questid,
                 time = time(),
@@ -122,8 +120,8 @@ function ns:CheckQuests()
                 x = x or 0,
                 y = y or 0,
             }
-            table.insert(quests_completed, quest)
-            table.insert(dbpc.log, quest)
+            table.insert(self.quests_completed, quest)
+            table.insert(self.dbpc.log, quest)
             session_quests[questid] = true
 
             if db.announce then
@@ -137,13 +135,19 @@ end
 
 function ns:RemoveQuest(index)
     if index == 0 then
-        table.wipe(quests_completed)
-        table.wipe(dbpc.log)
+        table.wipe(self.quests_completed)
+        table.wipe(self.dbpc.log)
     else
-        tremove(quests_completed,index)
-        tremove(dbpc.log,index)
+        local quest = self.dbpc.log[index]
+        for i, q in ipairs(self.quests_completed) do
+            if q.id == quest.id then
+                tremove(self.quests_completed,i)
+                break
+            end
+        end
+        tremove(self.dbpc.log,index)
     end
-    ns:RefreshLog()
+    self:RefreshLog()
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
@@ -159,7 +163,7 @@ dataobject.OnClick = function(frame, button)
         ns:RemoveQuest(0)
     else
         if IsShiftKeyDown() then
-            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, dbpc.log[#dbpc.log])
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ns.dbpc.log[#ns.dbpc.log])
         else
             ns:ToggleLog()
         end
@@ -179,7 +183,7 @@ dataobject.OnTooltipShow = function(tooltip)
             map, level = ns.MapNameFromID(quest.map)
         end
         tooltip:AddDoubleLine(
-            ("%d: %s"):format(quest.id, quest_names[quest.id] or UNKNOWN),
+            ("%d: %s"):format(quest.id, ns.quest_names[quest.id] or UNKNOWN),
             ("%s (%s) %.2f, %.2f"):format(quest.map, map .. (level and (' / ' .. level) or ''), quest.x * 100, quest.y * 100)
         )
     end
