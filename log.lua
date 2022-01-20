@@ -54,6 +54,8 @@ function ns:BuildLog()
                     local p = UiMapPoint.CreateFromCoordinates(m,quest.x,quest.y)
                     C_Map.SetUserWaypoint(p)
                     OpenWorldMap(m)
+                else
+                    ns.Print('Can\'t set waypoint for',m,quest.x,quest.y)
                 end
             end
         end
@@ -97,14 +99,14 @@ function ns:BuildLog()
         log.lines[i] = line
     end
 
-    local nextpage = ns.CreatePageButton(log, "Next")
+    local nextpage = self.CreatePageButton(log, "Next")
     nextpage:SetPoint("BOTTOMRIGHT", -40, 6)
     nextpage:SetScript("OnClick", function(self)
         log.offset = log.offset + PAGESIZE
         ns:RefreshLog()
     end)
     log.nextpage = nextpage
-    local prevpage = ns.CreatePageButton(log, "Prev")
+    local prevpage = self.CreatePageButton(log, "Prev")
     prevpage:SetPoint("BOTTOMLEFT", 40, 6)
     prevpage:SetScript("OnClick", function(self)
         log.offset = math.max(0, log.offset - PAGESIZE)
@@ -120,7 +122,7 @@ end
 
 function ns:RefreshLog()
     if not self:LogShown() then return end
-    local size = #ns.dbpc.log
+    local size = #self.dbpc.log
     local dirtySize = math.max(size,lastSize)
 
     if log.offset == 0 then
@@ -137,7 +139,7 @@ function ns:RefreshLog()
     for i = 1, math.min(dirtySize,PAGESIZE) do
         -- Reverse-order, so offset=0 should get us the final row in log
         local index = size - log.offset - (i - 1)
-        local quest = ns.dbpc.log[index]
+        local quest = self.dbpc.log[index]
         if quest then
             local map, level
             if type(quest.map) == 'string' then
@@ -145,12 +147,12 @@ function ns:RefreshLog()
                 map = quest.map
                 level = quest.level
             else
-                map, level = ns.MapNameFromID(quest.map)
+                map, level = self.MapNameFromID(quest.map)
             end
-            log.lines[i].title:SetFormattedText("%d: %s", quest.id, ns.quest_names[quest.id] or UNKNOWN)
+            log.lines[i].title:SetFormattedText("%d: %s", quest.id, self.quest_names[quest.id] or UNKNOWN)
             log.lines[i].location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
             log.lines[i].coords:SetFormattedText("%.2f, %.2f", quest.x * 100, quest.y * 100)
-            log.lines[i].time:SetText(ns.FormatLastSeen(quest.time))
+            log.lines[i].time:SetText(self.FormatLastSeen(quest.time))
             log.lines[i]:Show()
         else
             log.lines[i]:Hide()
