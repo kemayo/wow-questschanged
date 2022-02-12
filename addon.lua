@@ -141,7 +141,7 @@ function ns:RemoveQuest(index)
         local quest = self.dbpc.log[index]
         for i, q in ipairs(self.quests_completed) do
             if q.id == quest.id then
-                tremove(self.quests_completed,i)
+                tremove(self.quests_completed, i)
                 break
             end
         end

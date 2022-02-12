@@ -23,21 +23,21 @@ function ns:BuildLog()
         local index = #ns.dbpc.log - log.offset - (self.index - 1)
         local quest = ns.dbpc.log[index]
         if quest then
-        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine(ns.quest_names[quest.id] or UNKNOWN)
-        GameTooltip:AddDoubleLine("id", quest.id)
-        GameTooltip:AddDoubleLine("map", quest.map)
-        if quest.level then
-            -- pre-8.0
-            GameTooltip:AddDoubleLine("level", quest.level)
-        end
-        GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
-        GameTooltip:AddDoubleLine("time", quest.time)
-        GameTooltip:Show()
+            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+            GameTooltip:AddLine(ns.quest_names[quest.id] or UNKNOWN)
+            GameTooltip:AddDoubleLine("id", quest.id)
+            GameTooltip:AddDoubleLine("map", quest.map)
+            if quest.level then
+                -- pre-8.0
+                GameTooltip:AddDoubleLine("level", quest.level)
+            end
+            GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
+            GameTooltip:AddDoubleLine("time", quest.time)
+            GameTooltip:Show()
         end
     end
 
-    local function Line_OnClick(self,button,down)
+    local function Line_OnClick(self, button, down)
         local index = #ns.dbpc.log - log.offset - (self.index - 1)
         local quest = ns.dbpc.log[index]
         if button == "RightButton" then
@@ -55,7 +55,7 @@ function ns:BuildLog()
                     C_Map.SetUserWaypoint(p)
                     OpenWorldMap(m)
                 else
-                    ns.Print('Can\'t set waypoint for',m,quest.x,quest.y)
+                    ns.Print('Can\'t set waypoint for', m, quest.x, quest.y)
                 end
             end
         end
@@ -123,7 +123,7 @@ end
 function ns:RefreshLog()
     if not self:LogShown() then return end
     local size = #self.dbpc.log
-    local dirtySize = math.max(size,lastSize)
+    local dirtySize = math.max(size, lastSize)
 
     if log.offset == 0 then
         log.prevpage:Disable()
@@ -136,7 +136,7 @@ function ns:RefreshLog()
         log.nextpage:Enable()
     end
 
-    for i = 1, math.min(dirtySize,PAGESIZE) do
+    for i = 1, math.min(dirtySize, PAGESIZE) do
         -- Reverse-order, so offset=0 should get us the final row in log
         local index = size - log.offset - (i - 1)
         local quest = self.dbpc.log[index]
