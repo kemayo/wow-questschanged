@@ -33,6 +33,9 @@ function ns:BuildLog()
             end
             GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
             GameTooltip:AddDoubleLine("time", quest.time)
+            GameTooltip:AddLine("Left-click for waypoint", 0, 1, 1)
+            GameTooltip:AddLine("Shift-click to copy", 0, 1, 1)
+            GameTooltip:AddLine("Right-click to remove", 0, 1, 1)
             GameTooltip:Show()
         end
     end
