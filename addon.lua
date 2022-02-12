@@ -212,7 +212,7 @@ _G["SLASH_".. myname:upper().."1"] = "/questschanged"
 SlashCmdList[myname:upper()] = function(msg)
     msg = msg:trim()
     if msg == "log" or msg == "" then
-        ns:ShowLog()
+        ns:ToggleLog()
     elseif msg == "icon" then
         if not icon then return end
         db.hide = not db.hide
