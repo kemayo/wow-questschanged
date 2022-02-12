@@ -159,8 +159,13 @@ local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject
 
 dataobject.OnClick = function(frame, button)
     if button == "RightButton" then
-        -- clear the list!
-        ns:RemoveQuest(0)
+        if IsShiftKeyDown() then
+            -- *really* clear the whole log
+            ns:RemoveQuest(0)
+        else
+            -- clear the current session
+            table.wipe(ns.quests_completed)
+        end
     else
         if IsShiftKeyDown() then
             StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ns.dbpc.log[#ns.dbpc.log])
@@ -200,8 +205,9 @@ dataobject.OnTooltipShow = function(tooltip)
 
     tooltip:AddDoubleLine("Location", ("%s (%s) %.2f, %.2f"):format(mapID or UNKNOWN, mapname .. (subname and (' / ' .. subname) or ''), (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
     tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
-    tooltip:AddLine("Shift-left-click to get a copy of the last quest for handynotes", 0, 1, 1)
-    tooltip:AddLine("Right-click to clear the list", 0, 1, 1)
+    tooltip:AddLine("Shift-left-click to copy the last quest", 0, 1, 1)
+    tooltip:AddLine("Right-click to clear the current session", 0, 1, 1)
+    tooltip:AddLine("Shift-right-click to clear the entire history", 1, 0, 0)
 end
 
 ns.dataobject = dataobject
