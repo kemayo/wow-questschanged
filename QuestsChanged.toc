@@ -1,4 +1,4 @@
-## Interface: 90105
+## Interface: 90200
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
