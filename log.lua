@@ -1,7 +1,6 @@
 local myname, ns = ...
 
 local floor = math.floor
-local PAGESIZE, lastSize = 13, 0
 local log, copybox
 function ns:BuildLog()
     log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
@@ -20,8 +19,7 @@ function ns:BuildLog()
     drag:SetPoint("BOTTOMRIGHT", _G["QuestsChangedFrameTitleBG"])
 
     local function Line_OnEnter(self)
-        local index = #ns.dbpc.log - log.offset - (self.index - 1)
-        local quest = ns.dbpc.log[index]
+        local quest = self.quest
         if quest then
             GameTooltip:SetOwner(self, "ANCHOR_LEFT")
             GameTooltip:AddLine(ns.quest_names[quest.id] or UNKNOWN)
@@ -41,10 +39,10 @@ function ns:BuildLog()
     end
 
     local function Line_OnClick(self, button, down)
-        local index = #ns.dbpc.log - log.offset - (self.index - 1)
-        local quest = ns.dbpc.log[index]
+        local quest = self.quest
         if button == "RightButton" then
-            ns:RemoveQuest(index)
+            print("Requesting quest removal", quest)
+            ns:RemoveQuest(quest)
         elseif IsShiftKeyDown() then
             StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, quest)
         else
@@ -64,106 +62,85 @@ function ns:BuildLog()
         end
     end
 
-    log.lines = {}
-    for i = 1, PAGESIZE do
-        local height = 32
-        local line = CreateFrame("Button", nil, log)
-        line:SetHeight(height)
-        line:SetPoint("TOPLEFT", 12, -((height * i)))
-        line:SetPoint("RIGHT", -12, 0)
-        line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
-        line:GetHighlightTexture():SetTexCoord(0.2, 0.8, 0.2, 0.8)
-        line:GetHighlightTexture():SetAlpha(0.5)
+    local ScrollBar = CreateFrame("EventFrame", nil, log, "WowTrimScrollBar")
+    ScrollBar:SetPoint("TOPRIGHT", -3, -28)
+    ScrollBar:SetPoint("BOTTOMRIGHT", -12, 4)
 
-        line.title = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightLeft")
-        line.title:SetPoint("TOPLEFT")
-        line.title:SetPoint("TOPRIGHT", line, "TOPLEFT", 260, 0)
-        line.title:SetPoint("BOTTOM", 0, 16)
-        line.time = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
-        line.time:SetPoint("TOPRIGHT")
-        line.time:SetPoint("TOPLEFT", line, "TOPRIGHT", -100, 0)
-        line.time:SetPoint("BOTTOM", 0, 16)
-        line.location = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
-        line.location:SetPoint("TOPRIGHT", line.time, "TOPLEFT")
-        line.location:SetPoint("TOPLEFT", line.title, "TOPRIGHT")
-        line.location:SetPoint("BOTTOM", 0, 16)
-        line.coords = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
-        line.coords:SetPoint("TOPLEFT", line.location, "BOTTOMLEFT")
-        line.coords:SetPoint("TOPRIGHT", line.location, "BOTTOMRIGHT")
-        line.coords:SetPoint("BOTTOM")
+    local ScrollBox = CreateFrame("Frame", nil, log, "WowScrollBoxList")
+    ScrollBox:SetPoint("TOPLEFT", 12, -32)
+    ScrollBox:SetPoint("BOTTOMRIGHT", ScrollBar, "BOTTOMLEFT")
 
-        line:SetScript("OnEnter", Line_OnEnter)
-        line:SetScript("OnLeave", GameTooltip_Hide)
-        line:SetScript("OnClick", Line_OnClick)
-        line:RegisterForClicks("LeftButtonUp","RightButtonUp")
+    local ScrollView = CreateScrollBoxListLinearView()
+    ScrollView:SetElementExtent(32)  -- Fixed height for each row; required as we're not using XML.
+    ScrollView:SetElementInitializer("Button", function(line, quest, isNew)
+        if not line.Title then
+            line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+            line:GetHighlightTexture():SetTexCoord(0.2, 0.8, 0.2, 0.8)
+            line:GetHighlightTexture():SetAlpha(0.5)
 
-        line.index = i
+            line.Title = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightLeft")
+            line.Title:SetPoint("TOPLEFT")
+            line.Title:SetPoint("TOPRIGHT", line, "TOPLEFT", 260, 0)
+            line.Title:SetPoint("BOTTOM", 0, 16)
+            line.Time = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.Time:SetPoint("TOPRIGHT")
+            line.Time:SetPoint("TOPLEFT", line, "TOPRIGHT", -100, 0)
+            line.Time:SetPoint("BOTTOM", 0, 16)
+            line.Location = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.Location:SetPoint("TOPRIGHT", line.Time, "TOPLEFT")
+            line.Location:SetPoint("TOPLEFT", line.Title, "TOPRIGHT")
+            line.Location:SetPoint("BOTTOM", 0, 16)
+            line.Coords = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.Coords:SetPoint("TOPLEFT", line.Location, "BOTTOMLEFT")
+            line.Coords:SetPoint("TOPRIGHT", line.Location, "BOTTOMRIGHT")
+            line.Coords:SetPoint("BOTTOM")
 
-        log.lines[i] = line
-    end
-
-    local nextpage = self.CreatePageButton(log, "Next")
-    nextpage:SetPoint("BOTTOMRIGHT", -40, 6)
-    nextpage:SetScript("OnClick", function(self)
-        log.offset = log.offset + PAGESIZE
-        ns:RefreshLog()
-    end)
-    log.nextpage = nextpage
-    local prevpage = self.CreatePageButton(log, "Prev")
-    prevpage:SetPoint("BOTTOMLEFT", 40, 6)
-    prevpage:SetScript("OnClick", function(self)
-        log.offset = math.max(0, log.offset - PAGESIZE)
-        ns:RefreshLog()
-    end)
-    log.prevpage = prevpage
-
-    log.page = log:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    log.page:SetPoint("BOTTOM", 0, 16)
-
-    log.offset = 0
-end
-
-function ns:RefreshLog()
-    if not self:LogShown() then return end
-    local size = #self.dbpc.log
-    local dirtySize = math.max(size, lastSize)
-
-    if log.offset == 0 then
-        log.prevpage:Disable()
-    else
-        log.prevpage:Enable()
-    end
-    if (log.offset + PAGESIZE) >= size then
-        log.nextpage:Disable()
-    else
-        log.nextpage:Enable()
-    end
-
-    for i = 1, math.min(dirtySize, PAGESIZE) do
-        -- Reverse-order, so offset=0 should get us the final row in log
-        local index = size - log.offset - (i - 1)
-        local quest = self.dbpc.log[index]
-        if quest then
-            local map, level
-            if type(quest.map) == 'string' then
-                -- pre-8.0 quest logging has mapFiles, just show them
-                map = quest.map
-                level = quest.level
-            else
-                map, level = self.MapNameFromID(quest.map)
-            end
-            log.lines[i].title:SetFormattedText("%d: %s", quest.id, self.quest_names[quest.id] or UNKNOWN)
-            log.lines[i].location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
-            log.lines[i].coords:SetFormattedText("%.2f, %.2f", quest.x * 100, quest.y * 100)
-            log.lines[i].time:SetText(self.FormatLastSeen(quest.time))
-            log.lines[i]:Show()
-        else
-            log.lines[i]:Hide()
+            line:SetScript("OnEnter", Line_OnEnter)
+            line:SetScript("OnLeave", GameTooltip_Hide)
+            line:SetScript("OnClick", Line_OnClick)
+            line:RegisterForClicks("LeftButtonUp","RightButtonUp")
         end
-    end
 
-    log.page:SetFormattedText(MERCHANT_PAGE_NUMBER, math.ceil(log.offset / PAGESIZE) + 1, math.ceil(size / PAGESIZE))
-    lastSize = size
+        line.quest = quest
+
+        local map, level
+        if type(quest.map) == 'string' then
+            -- pre-8.0 quest logging has mapFiles, just show them
+            map = quest.map
+            level = quest.level
+        else
+            map, level = self.MapNameFromID(quest.map)
+        end
+        line.Title:SetFormattedText("%d: %s", quest.id, self.quest_names[quest.id] or UNKNOWN)
+        line.Location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
+        line.Coords:SetFormattedText("%.2f, %.2f", quest.x * 100, quest.y * 100)
+        line.Time:SetText(self.FormatLastSeen(quest.time))
+    end)
+
+    ScrollUtil.InitScrollBoxWithScrollBar(ScrollBox, ScrollBar, ScrollView)
+
+    log.DataProvider = CreateDataProvider(self.dbpc.log)
+    -- It's stored in an append-table, but I want the new events at the top:
+    log.DataProvider:SetSortComparator(function(lhs, rhs)
+        return lhs.time > rhs.time
+    end)
+
+    ScrollBox:SetDataProvider(log.DataProvider)
+
+    self:RegisterCallback(self.Event.OnQuestAdded, function(_, quest, index)
+        log.DataProvider:Insert(quest)
+    end)
+    self:RegisterCallback(self.Event.OnQuestRemoved, function(_, quest, index)
+        log.DataProvider:Remove(quest)
+    end)
+    self:RegisterCallback(self.Event.OnAllQuestsRemoved, function()
+        log.DataProvider:Flush()
+    end)
+
+    log:SetScript("OnShow", function()
+        -- for the timestamps
+        ScrollView:Rebuild()
+    end)
 end
 
 function ns:LogShown()
@@ -176,28 +153,11 @@ function ns:ToggleLog()
         log:Hide()
     else
         log:Show()
-        self:RefreshLog()
     end
 end
 
 local function ClickSound(self)
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-end
-
-function ns.CreatePageButton(parent, type)
-    assert(type == "Next" or type == "Prev", "`type` must be 'Next' or 'Prev'")
-
-    local button = CreateFrame("Button", nil, parent)
-    button:SetSize(32, 32)
-
-    button:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. type .. "Page-Up")
-    button:SetPushedTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. type .. "Page-Down")
-    button:SetDisabledTexture("Interface\\Buttons\\UI-SpellbookIcon-" .. type .. "Page-Disabled")
-    button:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
-
-    button:HookScript("OnClick", ClickSound)
-
-    return button
 end
 
 function ns.FormatLastSeen(t)

@@ -14,14 +14,37 @@ local SPAM_QUESTS = {
     [32469] = true, -- Crystal Clarity
 }
 
-local f = CreateFrame('Frame')
-f:SetScript("OnEvent", function(self, event, ...)
-    ns[event](ns, event, ...)
+local Callbacks = CreateFrame("EventFrame")
+Callbacks:SetUndefinedEventsAllowed(true)
+Callbacks:SetScript("OnEvent", function(self, event, ...)
+    self:TriggerEvent(event, event, ...)
 end)
-f:RegisterEvent("ADDON_LOADED")
-f:Hide()
+Callbacks:RegisterEvent("ADDON_LOADED")
+Callbacks:Hide()
+ns.Callbacks = Callbacks
 
-function ns:ADDON_LOADED(event, name)
+Callbacks:GenerateCallbackEvents{"OnQuestAdded", "OnQuestRemoved", "OnAllQuestsRemoved"}
+ns.Event = Callbacks.Event
+
+-- help out with callback boilerplate:
+function ns:RegisterCallback(event, func)
+    if not func and ns[event] then func = ns[event] end
+    if not Callbacks:DoesFrameHaveEvent(event) then
+        Callbacks:RegisterEvent(event)
+    end
+    return Callbacks:RegisterCallback(event, func, self)
+end
+function ns:UnregisterCallback(event)
+    if not Callbacks:DoesFrameHaveEvent(event) then
+        Callbacks:UnregisterEvent(event)
+    end
+    return Callbacks:UnregisterCallback(event, self)
+end
+function ns:TriggerEvent(...)
+    return Callbacks:TriggerEvent(...)
+end
+
+ns:RegisterCallback("ADDON_LOADED", function(self, event, name)
     if name ~= myname then return end
 
     _G[myname.."DB"] = setmetatable(_G[myname.."DB"] or {}, {
@@ -48,14 +71,14 @@ function ns:ADDON_LOADED(event, name)
         icon:Register(myname, ns.dataobject, db)
     end
 
-    f:UnregisterEvent("ADDON_LOADED")
-
-    if IsLoggedIn() then self:PLAYER_LOGIN() else f:RegisterEvent("PLAYER_LOGIN") end
-end
+    self:UnregisterCallback("ADDON_LOADED")
+    if IsLoggedIn() then self:PLAYER_LOGIN() else self:RegisterCallback("PLAYER_LOGIN") end
+end)
 function ns:PLAYER_LOGIN()
-    f:RegisterEvent("QUEST_LOG_UPDATE")
-    f:RegisterEvent("ENCOUNTER_LOOT_RECEIVED")
-    f:UnregisterEvent("PLAYER_LOGIN")
+    -- Quests
+    self:RegisterCallback("QUEST_LOG_UPDATE")
+    self:RegisterCallback("ENCOUNTER_LOOT_RECEIVED")
+    self:UnregisterCallback("PLAYER_LOGIN")
 
     new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
     for _, questid in pairs(new_quests) do
@@ -63,20 +86,20 @@ function ns:PLAYER_LOGIN()
     end
 end
 function ns:QUEST_LOG_UPDATE()
-    f:Show()
+    Callbacks:Show()
 end
 ns.ENCOUNTER_LOOT_RECEIVED = ns.QUEST_LOG_UPDATE
 
 do
     local time_since = 0
-    f:SetScript("OnUpdate", function(self, elapsed)
+    Callbacks:SetScript("OnUpdate", function(self, elapsed)
         time_since = time_since + elapsed
         if time_since < 0.3 then
             return
         end
         ns:CheckQuests()
         time_since = 0
-        f:Hide()
+        self:Hide()
     end)
 end
 
@@ -125,29 +148,39 @@ function ns:CheckQuests()
             session_quests[questid] = true
 
             if db.announce then
-                ns.Print("Quest complete:", questid, questName or UNKNOWN)
+                self.Print("Quest complete:", questid, questName or UNKNOWN)
             end
+
+            self:TriggerEvent(self.Event.OnQuestAdded, quest, #self.dbpc.log)
         end
         quests[questid] = true
     end
-    self:RefreshLog()
 end
 
 function ns:RemoveQuest(index)
     if index == 0 then
         table.wipe(self.quests_completed)
         table.wipe(self.dbpc.log)
+        self:TriggerEvent(self.Event.OnAllQuestsRemoved)
     else
-        local quest = self.dbpc.log[index]
+        local quest
+        if type(index) == "table" then
+            quest = index
+            index = tIndexOf(self.dbpc.log, quest)
+            if not index then return end
+        else
+            quest = self.dbpc.log[index]
+        end
+
         for i, q in ipairs(self.quests_completed) do
             if q.id == quest.id then
                 tremove(self.quests_completed, i)
                 break
             end
         end
-        tremove(self.dbpc.log,index)
+        tremove(self.dbpc.log, index)
+        self:TriggerEvent(self.Event.OnQuestRemoved, quest, index)
     end
-    self:RefreshLog()
 end
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
