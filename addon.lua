@@ -23,7 +23,10 @@ Callbacks:RegisterEvent("ADDON_LOADED")
 Callbacks:Hide()
 ns.Callbacks = Callbacks
 
-Callbacks:GenerateCallbackEvents{"OnQuestAdded", "OnQuestRemoved", "OnAllQuestsRemoved"}
+Callbacks:GenerateCallbackEvents{
+    "OnQuestAdded", "OnQuestRemoved", "OnAllQuestsRemoved",
+    "OnVignetteAdded", "OnVignetteRemoved", "OnAllVignettesRemoved",
+}
 ns.Event = Callbacks.Event
 
 -- help out with callback boilerplate:
@@ -84,6 +87,11 @@ function ns:PLAYER_LOGIN()
     for _, questid in pairs(new_quests) do
         quests[questid] = true
     end
+
+    -- Vignettes
+    self:RegisterCallback("PLAYER_ENTERING_WORLD")
+    self:RegisterCallback("VIGNETTE_MINIMAP_UPDATED")
+    self:RegisterCallback("VIGNETTES_UPDATED")
 end
 function ns:QUEST_LOG_UPDATE()
     Callbacks:Show()
@@ -201,7 +209,11 @@ dataobject.OnClick = function(frame, button)
         end
     else
         if IsShiftKeyDown() then
-            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ns.dbpc.log[#ns.dbpc.log])
+            local data = ns.dbpc.log[#ns.dbpc.log]
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ("[%d] = {quest=%d, label=\"\"},"):format(
+                ns.GetCoord(data.x, data.y),
+                (data.id or "nil")
+            ))
         else
             ns:ToggleLog()
         end
@@ -291,6 +303,10 @@ function ns.MapNameFromID(mapID)
     return mapdata.name
 end
 
+function ns.GetCoord(x, y)
+    return floor(x * 10000 + 0.5) * 10000 + floor(y * 10000 + 0.5)
+end
+
 StaticPopupDialogs["QUESTSCHANGED_COPYBOX"] = {
     text = "Copy me",
     hasEditBox = true,
@@ -307,10 +323,7 @@ StaticPopupDialogs["QUESTSCHANGED_COPYBOX"] = {
     end,
     OnShow = function(self, data)
         if data then
-            self.editBox:SetText(("[%d%d] = {quest=%d, label=\"\"},"):format(
-                floor((data.x or 0) * 10000), floor((data.y or 0) * 10000),
-                (data.id or nil)
-            ))
+            self.editBox:SetText(data)
             self.editBox:HighlightText()
         end
     end,
