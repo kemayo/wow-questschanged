@@ -269,7 +269,7 @@ function ns:BuildVignetteLog()
         local map, level = self.MapNameFromID(vignette.uiMapID)
         line.Texture:SetAtlas(vignette.atlas)
         line.Title:SetFormattedText("%d: %s", vignette.id, vignette.name or UNKNOWN)
-        line.Location:SetFormattedText("%s (%s)", vignette.uiMapID, map .. (level and (' / ' .. level) or ''))
+        line.Location:SetFormattedText("%s (%s)", vignette.uiMapID or "?", map .. (level and (' / ' .. level) or ''))
         line.Coords:SetFormattedText("%.2f, %.2f", vignette.x * 100, vignette.y * 100)
         line.Time:SetText(self.FormatLastSeen(vignette.time))
     end

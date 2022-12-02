@@ -26,9 +26,10 @@ function ns:OnVignetteEvent()
             log[vignetteInfo.vignetteGUID] = {
                 id = vignetteInfo.vignetteID,
                 guid = vignetteInfo.vignetteGUID,
-                uiMapID = uiMapID,
-                x = x,
-                y = y,
+                -- locations might be nil if it's from an instance
+                uiMapID = uiMapID or 0,
+                x = x or 0,
+                y = y or 0,
                 name = vignetteInfo.name,
                 time = time(),
                 atlas = vignetteInfo.atlasName,
