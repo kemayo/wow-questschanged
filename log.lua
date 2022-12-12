@@ -99,7 +99,7 @@ function ns:BuildQuestLog()
         if button == "RightButton" then
             ns:RemoveQuest(quest)
         elseif IsShiftKeyDown() then
-            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ("[%d] = {quest=%d, label=\"\"},"):format(
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ("[%d] = {quest=%d},"):format(
                 ns.GetCoord(quest.x, quest.y),
                 quest.id or "nil"
             ))
@@ -193,6 +193,7 @@ function ns:BuildVignetteLog()
             GameTooltip:AddLine(vignette.name or UNKNOWN)
             GameTooltip:AddDoubleLine("id", vignette.id)
             GameTooltip:AddDoubleLine("map", vignette.uiMapID)
+            GameTooltip:AddDoubleLine("atlas", vignette.atlas)
             GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(vignette.x * 100, vignette.y * 100))
             GameTooltip:AddDoubleLine("time", vignette.time)
             GameTooltip:AddLine("Left-click for waypoint", 0, 1, 1)
