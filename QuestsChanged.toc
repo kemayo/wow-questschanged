@@ -1,8 +1,9 @@
-## Interface: 100002
+## Interface: 100100
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
 ## Version: @project-version@
+## IconTexture: Interface\Icons\Ability_Spy
 ## LoadOnDemand: 0
 ## OptionalDeps: LibDBIcon-1.0
 ## X-Curse-Project-ID: 86759
