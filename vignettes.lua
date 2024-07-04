@@ -1,5 +1,5 @@
 local myname, ns = ...
-local myfullname = GetAddOnMetadata(myname, "Title")
+local myfullname = C_AddOns.GetAddOnMetadata(myname, "Title")
 
 local function VignettePosition(vignetteGUID)
     local uiMapID = C_Map.GetBestMapForUnit('player')
