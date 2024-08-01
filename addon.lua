@@ -54,6 +54,7 @@ ns:RegisterCallback("ADDON_LOADED", function(self, event, name)
         __index = {
             minimap = false,
             announce = false,
+            showInCompartment=true,
         },
     })
     _G[myname.."DBPC"] = setmetatable(_G[myname.."DBPC"] or {}, {
