@@ -196,7 +196,7 @@ local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject("QuestsChanged", {
     type = "data source",
     label = "QuestsChanged",
-    icon = [[Interface\Icons\Ability_Spy]],
+    icon = [[Interface\Minimap\Tracking\QuestBlob]],
 })
 
 dataobject.OnClick = function(frame, button)
