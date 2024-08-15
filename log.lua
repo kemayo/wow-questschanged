@@ -57,7 +57,7 @@ function ns:BuildLogPanel(initializer, dataProvider)
     Container.ScrollBox = ScrollBox
 
     local ScrollView = CreateScrollBoxListLinearView()
-    ScrollView:SetDataProvider(dataProvider)
+    ScrollView:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
     ScrollView:SetElementExtent(32)  -- Fixed height for each row; required as we're not using XML.
     ScrollView:SetElementInitializer("Button", initializer)
     Container.ScrollView = ScrollView
@@ -120,7 +120,7 @@ function ns:BuildQuestLog()
         end
     end
 
-    local initializer = function(line, quest)
+    local initializer = function(line, index)
         if not line.Title then
             line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
             line:GetHighlightTexture():SetTexCoord(0.2, 0.8, 0.2, 0.8)
@@ -150,6 +150,9 @@ function ns:BuildQuestLog()
             line:RegisterForClicks("LeftButtonUp","RightButtonUp")
         end
 
+        -- It's an append table, but I want this to be newest-first
+        -- (And the indexrange dataprovider doesn't have a sort comparator)
+        local quest = self.dbpc.log[#self.dbpc.log - (index - 1)]
         line.data = quest
 
         local map, level
@@ -166,17 +169,14 @@ function ns:BuildQuestLog()
         line.Time:SetText(self.FormatLastSeen(quest.time))
     end
 
-    local dataProvider = CreateDataProvider(self.dbpc.log)
-    -- It's stored in an append-table, but I want the new events at the top:
-    dataProvider:SetSortComparator(function(lhs, rhs)
-        return lhs.time > rhs.time
-    end)
+    -- This is a vast table (my main has 18,586 entries in it), so use the IndexRange provider
+    local dataProvider = CreateIndexRangeDataProvider(#self.dbpc.log)
 
     self:RegisterCallback(self.Event.OnQuestAdded, function(_, quest, index)
-        dataProvider:Insert(quest)
+        dataProvider:Insert(index)
     end)
     self:RegisterCallback(self.Event.OnQuestRemoved, function(_, quest, index)
-        dataProvider:Remove(quest)
+        dataProvider:Remove(index)
     end)
     self:RegisterCallback(self.Event.OnAllQuestsRemoved, function()
         dataProvider:Flush()
@@ -275,6 +275,7 @@ function ns:BuildVignetteLog()
         line.Time:SetText(self.FormatLastSeen(vignette.time))
     end
 
+    -- This is a tiny table that's its own source-of-truth, so regular dataprovider is fine
     local dataProvider = CreateDataProvider(self.vignetteLogOrder)
     -- It's stored in an append-table, but I want the new events at the top:
     dataProvider:SetSortComparator(function(lhs, rhs)
