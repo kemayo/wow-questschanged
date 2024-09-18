@@ -201,13 +201,8 @@ local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject
 
 dataobject.OnClick = function(frame, button)
     if button == "RightButton" then
-        if IsShiftKeyDown() then
-            -- *really* clear the whole log
-            ns:RemoveQuest(0)
-        else
-            -- clear the current session
-            table.wipe(ns.quests_completed)
-        end
+        -- clear the current session
+        table.wipe(ns.quests_completed)
     else
         if IsShiftKeyDown() then
             local data = ns.dbpc.log[#ns.dbpc.log]
@@ -253,7 +248,6 @@ dataobject.OnTooltipShow = function(tooltip)
     tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
     tooltip:AddLine("Shift-left-click to copy the last quest", 0, 1, 1)
     tooltip:AddLine("Right-click to clear the current session", 0, 1, 1)
-    tooltip:AddLine("Shift-right-click to clear the entire history", 1, 0, 0)
 end
 
 ns.dataobject = dataobject
