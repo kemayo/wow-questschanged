@@ -6,6 +6,7 @@ local icon = LibStub("LibDBIcon-1.0", true)
 local db, dbpc
 local quests = {}
 local new_quests = {}
+local new_quests_byid = {}
 local session_quests = {}
 ns.quests_completed = {}
 
@@ -54,6 +55,7 @@ ns:RegisterCallback("ADDON_LOADED", function(self, event, name)
         __index = {
             minimap = false,
             announce = false,
+            removed = true,
             showInCompartment=true,
         },
     })
@@ -132,7 +134,9 @@ function ns:CheckQuests()
     end
     local mapdata, x, y
     new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
+    wipe(new_quests_byid)
     for _, questid in pairs(new_quests) do
+        new_quests_byid[questid] = true
         if not quests[questid] and not session_quests[questid] and not SPAM_QUESTS[questid] then
             if not mapdata then
                 local mapID = C_Map.GetBestMapForUnit('player')
@@ -163,6 +167,16 @@ function ns:CheckQuests()
             self:TriggerEvent(self.Event.OnQuestAdded, quest, #self.dbpc.log)
         end
         quests[questid] = true
+    end
+    if db.removed then
+        for questid in pairs(quests) do
+            if not new_quests_byid[questid] and not SPAM_QUESTS[questid] then
+                quests[questid] = nil
+                if db.announce then
+                    self.Print("Quest no longer complete:", questid, self.quest_names[questid] or UNKNOWN)
+                end
+            end
+        end
     end
 end
 
@@ -268,6 +282,9 @@ SlashCmdList[myname:upper()] = function(msg)
             icon:Show(myname)
         end
         ns.Print("icon", db.hide and "hidden" or "shown")
+    elseif msg == "removed" then
+        db.removed = not db.removed
+        ns.Print("watch for removed quests", db.removed and "enabled" or "disabled")
     elseif msg == "announce" then
         db.announce = not db.announce
         ns.Print("announce in chat", db.announce and "enabled" or "disabled")
