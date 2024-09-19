@@ -3,7 +3,7 @@ local myname, ns = ...
 local floor = math.floor
 local log, copybox
 function ns:BuildLog()
-    log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
+    log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate, TabSystemOwnerTemplate")
     log:EnableMouse(true)
     log:SetMovable(true)
     log:SetClampedToScreen(true)
@@ -12,7 +12,7 @@ function ns:BuildLog()
     log:SetPoint("TOP", 0, -80)
     log:Hide()
 
-    log.Title:SetText("QuestsChanged")
+    log.Title:SetText(myname)
 
     local drag = CreateFrame("Frame", "$parentTitleButton", log, "TitleDragAreaTemplate")
     drag:SetPoint("TOPLEFT", _G["QuestsChangedFrameTitleBG"])
@@ -23,22 +23,12 @@ function ns:BuildLog()
     log.Vignettes = self:BuildVignetteLog()
     log.Vignettes:Hide()
 
-    local QuestButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
-    QuestButton:SetText("Quests")
-    QuestButton:SetSize(120, 22)
-    QuestButton:SetPoint("TOP", log, "BOTTOM", -71, 8)
-    QuestButton:SetScript("OnClick", function()
-        log.Vignettes:Hide()
-        log.Quests:Show()
-    end)
-    local VignetteButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
-    VignetteButton:SetText("Vignettes")
-    VignetteButton:SetSize(120, 22)
-    VignetteButton:SetPoint("LEFT", QuestButton, "RIGHT", 22, 0)
-    VignetteButton:SetScript("OnClick", function()
-        log.Quests:Hide()
-        log.Vignettes:Show()
-    end)
+    log.TabSystem = CreateFrame("Frame", nil, log, "TabSystemTemplate")
+    log.TabSystem:SetPoint("TOPLEFT", log, "BOTTOMLEFT", 22, 6)
+    log:SetTabSystem(log.TabSystem)
+
+    log.questTabID = log:AddNamedTab(QUESTS_LABEL, log.Quests)
+    log.vignettesTabID = log:AddNamedTab("Vignettes", log.Vignettes)
 end
 
 function ns:BuildLogPanel(initializer, dataProvider)
