@@ -29,6 +29,8 @@ function ns:BuildLog()
 
     log.questTabID = log:AddNamedTab(QUESTS_LABEL, log.Quests)
     log.vignettesTabID = log:AddNamedTab("Vignettes", log.Vignettes)
+
+    log:SetTab(log.questTabID)
 end
 
 function ns:BuildLogPanel(initializer, dataProvider)
