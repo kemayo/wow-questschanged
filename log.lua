@@ -12,6 +12,8 @@ function ns:BuildLog()
     log:SetPoint("TOP", 0, -80)
     log:Hide()
 
+    tinsert(UISpecialFrames, log:GetName())
+
     log.Title:SetText(myname)
 
     local drag = CreateFrame("Frame", "$parentTitleButton", log, "TitleDragAreaTemplate")
