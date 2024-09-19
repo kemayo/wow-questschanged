@@ -16,10 +16,10 @@ ns.vignetteLog = log
 ns.vignetteLogOrder = ordered
 -- QClog = log
 function ns:OnVignetteEvent()
-	local vignetteids = C_VignetteInfo.GetVignettes()
-	if not vignetteids then return end
+    local vignetteids = C_VignetteInfo.GetVignettes()
+    if not vignetteids then return end
 
-	for i, instanceid in ipairs(vignetteids) do
+    for i, instanceid in ipairs(vignetteids) do
         local vignetteInfo = C_VignetteInfo.GetVignetteInfo(instanceid)
         if vignetteInfo and vignetteInfo.vignetteGUID and not log[vignetteInfo.vignetteGUID] then
             local uiMapID, _, x, y = VignettePosition(vignetteInfo.vignetteGUID)
@@ -44,8 +44,8 @@ ns.VIGNETTE_MINIMAP_UPDATED = ns.OnVignetteEvent
 ns.VIGNETTES_UPDATED = ns.OnVignetteEvent
 
 function ns:RemoveVignette(vignette)
-	if not (vignette and vignette.guid) then return end
-	log[vignette.guid] = nil
-	table.remove(ordered, tIndexOf(ordered, vignette.guid))
-	self:TriggerEvent(self.Event.OnVignetteRemoved, vignette, vignette.guid)
+    if not (vignette and vignette.guid) then return end
+    log[vignette.guid] = nil
+    table.remove(ordered, tIndexOf(ordered, vignette.guid))
+    self:TriggerEvent(self.Event.OnVignetteRemoved, vignette, vignette.guid)
 end
