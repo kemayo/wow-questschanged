@@ -137,6 +137,10 @@ function ns:BuildQuestLog()
             line.Coords:SetPoint("TOPLEFT", line.Location, "BOTTOMLEFT")
             line.Coords:SetPoint("TOPRIGHT", line.Location, "BOTTOMRIGHT")
             line.Coords:SetPoint("BOTTOM")
+            line.Divider = line:CreateTexture()
+            line.Divider:SetColorTexture(1, 1, 0, 0.5)
+            line.Divider:SetPoint("BOTTOMLEFT")
+            line.Divider:SetPoint("BOTTOMRIGHT")
 
             line:SetScript("OnEnter", Line_OnEnter)
             line:SetScript("OnLeave", GameTooltip_Hide)
@@ -162,6 +166,11 @@ function ns:BuildQuestLog()
         line.Location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
         line.Coords:SetFormattedText("%.2f, %.2f", quest.x * 100, quest.y * 100)
         line.Time:SetText(self.FormatLastSeen(quest.time))
+        if index == #ns.quests_completed then
+            line.Divider:Show()
+        else
+            line.Divider:Hide()
+        end
     end
 
     -- This is a vast table (my main has 18,586 entries in it), so use the IndexRange provider
