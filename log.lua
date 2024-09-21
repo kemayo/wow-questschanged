@@ -81,6 +81,7 @@ function ns:BuildQuestLog()
             end
             GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
             GameTooltip:AddDoubleLine("time", quest.time)
+            GameTooltip:AddDoubleLine(" ", date("%c", quest.time))
             GameTooltip:AddLine("Left-click for waypoint", 0, 1, 1)
             GameTooltip:AddLine("Shift-click to copy", 0, 1, 1)
             GameTooltip:AddLine("Right-click to remove", 0, 1, 1)
@@ -190,6 +191,7 @@ function ns:BuildVignetteLog()
             GameTooltip:AddDoubleLine("atlas", vignette.atlas)
             GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(vignette.x * 100, vignette.y * 100))
             GameTooltip:AddDoubleLine("time", vignette.time)
+            GameTooltip:AddDoubleLine(" ", date("%c", vignette.time))
             GameTooltip:AddLine("Left-click for waypoint", 0, 1, 1)
             GameTooltip:AddLine("Shift-click to copy", 0, 1, 1)
             GameTooltip:AddLine("Right-click to remove", 0, 1, 1)
@@ -302,23 +304,19 @@ function ns:ToggleLog()
     end
 end
 
-local function ClickSound(self)
-    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-end
+do
+    local QCSecondsFormatter = CreateFromMixins(SecondsFormatterMixin)
+    QCSecondsFormatter:Init(SECONDS_PER_MIN, SecondsFormatter.Abbreviation.Truncate, SecondsFormatterConstants.RoundUpLastUnit, SecondsFormatterConstants.ConvertToLower)
+    function QCSecondsFormatter:GetDesiredUnitCount(seconds)
+        return seconds > SECONDS_PER_DAY and 2 or 1
+    end
+    function QCSecondsFormatter:GetMinInterval(seconds)
+        return SecondsFormatter.Interval.Minutes
+    end
 
-function ns.FormatLastSeen(t)
-    t = tonumber(t)
-    if not t or t == 0 then return NEVER end
-    local currentTime = time()
-    local minutes = floor(((currentTime - t) / 60) + 0.5)
-    if minutes > 119 then
-        local hours = floor(((currentTime - t) / 3600) + 0.5)
-        if hours > 23 then
-            return floor(((currentTime - t) / 86400) + 0.5).." day(s)"
-        else
-            return hours.." hour(s)"
-        end
-    else
-        return minutes.." minute(s)"
+    function ns.FormatLastSeen(t)
+        t = tonumber(t)
+        if not t or t == 0 then return NEVER end
+        return QCSecondsFormatter:Format(time() - t)
     end
 end
