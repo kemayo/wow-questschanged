@@ -3,7 +3,11 @@ local myname, ns = ...
 local floor = math.floor
 local log, copybox
 function ns:BuildLog()
-    log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate, TabSystemOwnerTemplate")
+    if _G.TabSystemOwnerMixin then
+        log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate, TabSystemOwnerTemplate")
+    else
+        log = CreateFrame("Frame", "QuestsChangedFrame", UIParent, "UIPanelDialogTemplate")
+    end
     log:EnableMouse(true)
     log:SetMovable(true)
     log:SetClampedToScreen(true)
@@ -21,18 +25,42 @@ function ns:BuildLog()
     drag:SetPoint("BOTTOMRIGHT", _G["QuestsChangedFrameTitleBG"])
 
     log.Quests = self:BuildQuestLog()
-    log.Quests:Show()
-    log.Vignettes = self:BuildVignetteLog()
-    log.Vignettes:Hide()
+    if ns.VIGNETTES then
+        log.Vignettes = self:BuildVignetteLog()
+        log.Vignettes:Hide()
+    end
 
-    log.TabSystem = CreateFrame("Frame", nil, log, "TabSystemTemplate")
-    log.TabSystem:SetPoint("TOPLEFT", log, "BOTTOMLEFT", 22, 6)
-    log:SetTabSystem(log.TabSystem)
+    if log.TabSystem then
+        log.TabSystem = CreateFrame("Frame", nil, log, "TabSystemTemplate")
+        log.TabSystem:SetPoint("TOPLEFT", log, "BOTTOMLEFT", 22, 6)
+        log:SetTabSystem(log.TabSystem)
 
-    log.questTabID = log:AddNamedTab(QUESTS_LABEL, log.Quests)
-    log.vignettesTabID = log:AddNamedTab("Vignettes", log.Vignettes)
+        log.Quests:Show()
+        log.questTabID = log:AddNamedTab(QUESTS_LABEL, log.Quests)
 
-    log:SetTab(log.questTabID)
+        if VIGNETTES then
+            log.vignettesTabID = log:AddNamedTab("Vignettes", log.Vignettes)
+        end
+
+        log:SetTab(log.questTabID)
+    elseif ns.VIGNETTES then
+        local QuestButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
+        QuestButton:SetText(QUESTS_LABEL)
+        QuestButton:SetSize(120, 22)
+        QuestButton:SetPoint("TOP", log, "BOTTOM", -71, 8)
+        QuestButton:SetScript("OnClick", function()
+            log.Vignettes:Hide()
+            log.Quests:Show()
+        end)
+        local VignetteButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
+        VignetteButton:SetText("Vignettes")
+        VignetteButton:SetSize(120, 22)
+        VignetteButton:SetPoint("LEFT", QuestButton, "RIGHT", 22, 0)
+        VignetteButton:SetScript("OnClick", function()
+            log.Quests:Hide()
+            log.Vignettes:Show()
+        end)
+    end
 end
 
 function ns:BuildLogPanel(initializer, dataProvider)
