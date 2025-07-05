@@ -1,4 +1,4 @@
-## Interface: 110100
+## Interface: 110107
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
