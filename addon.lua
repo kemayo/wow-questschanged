@@ -3,6 +3,8 @@ local myfullname = C_AddOns.GetAddOnMetadata(myname, "Title")
 
 local icon = LibStub("LibDBIcon-1.0", true)
 
+ns.VIGNETTES = C_EventUtils.IsEventValid("VIGNETTE_MINIMAP_UPDATED")
+
 local db, dbpc
 local quests = {}
 local new_quests = {}
@@ -83,18 +85,26 @@ end)
 function ns:PLAYER_LOGIN()
     -- Quests
     self:RegisterCallback("QUEST_LOG_UPDATE")
-    self:RegisterCallback("ENCOUNTER_LOOT_RECEIVED")
+    if C_EventUtils.IsEventValid("ENCOUNTER_LOOT_RECEIVED") then
+        self:RegisterCallback("ENCOUNTER_LOOT_RECEIVED")
+    end
     self:UnregisterCallback("PLAYER_LOGIN")
 
-    new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
-    for _, questid in pairs(new_quests) do
-        quests[questid] = true
+    if C_QuestLog.GetAllCompletedQuestIDs then
+        new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
+        for _, questid in pairs(new_quests) do
+            quests[questid] = true
+        end
+    else
+        quests = GetQuestsCompleted()
     end
 
     -- Vignettes
-    self:RegisterCallback("PLAYER_ENTERING_WORLD")
-    self:RegisterCallback("VIGNETTE_MINIMAP_UPDATED")
-    self:RegisterCallback("VIGNETTES_UPDATED")
+    if ns.VIGNETTES then
+        self:RegisterCallback("PLAYER_ENTERING_WORLD")
+        self:RegisterCallback("VIGNETTE_MINIMAP_UPDATED")
+        self:RegisterCallback("VIGNETTES_UPDATED")
+    end
 end
 function ns:QUEST_LOG_UPDATE()
     Callbacks:Show()
@@ -116,7 +126,7 @@ end
 
 ns.quest_names = {}
 setmetatable(ns.quest_names, {__index = function(self, key)
-    local name = C_QuestLog.GetTitleForQuestID(key)
+    local name = (C_QuestLog.GetTitleForQuestID or C_QuestLog.GetQuestInfo)(key)
     if name then
         self[key] = name
         return name
@@ -133,10 +143,16 @@ function ns:CheckQuests()
         return
     end
     local mapdata, x, y
-    new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
     wipe(new_quests_byid)
-    for _, questid in pairs(new_quests) do
-        new_quests_byid[questid] = true
+    if C_QuestLog.GetAllCompletedQuestIDs then
+        new_quests = C_QuestLog.GetAllCompletedQuestIDs(new_quests)
+        for _, questid in pairs(new_quests) do
+            new_quests_byid[questid] = true
+        end
+    else
+        new_quests_byid = GetQuestsCompleted(new_quests_byid)
+    end
+    for questid in pairs(new_quests_byid) do
         if not quests[questid] and not session_quests[questid] and not SPAM_QUESTS[questid] then
             if not mapdata then
                 local mapID = C_Map.GetBestMapForUnit('player')
