@@ -70,12 +70,12 @@ function ns:BuildLogPanel(initializer, dataProvider)
 
     local ScrollBar = CreateFrame("EventFrame", nil, Container, "WowTrimScrollBar")
     ScrollBar:SetPoint("TOPRIGHT", 0, 5)
-    ScrollBar:SetPoint("BOTTOMRIGHT")
+    ScrollBar:SetPoint("BOTTOMRIGHT", 0, 2)
     Container.ScrollBar = ScrollBar
 
     local ScrollBox = CreateFrame("Frame", nil, Container, "WowScrollBoxList")
     ScrollBox:SetPoint("TOPLEFT")
-    ScrollBox:SetPoint("BOTTOMRIGHT", ScrollBar, "BOTTOMLEFT")
+    ScrollBox:SetPoint("BOTTOMRIGHT", ScrollBar, "BOTTOMLEFT", -2, 2)
     Container.ScrollBox = ScrollBox
 
     local ScrollView = CreateScrollBoxListLinearView()
