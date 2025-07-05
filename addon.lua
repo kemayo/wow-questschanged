@@ -12,6 +12,8 @@ local new_quests_byid = {}
 local session_quests = {}
 ns.quests_completed = {}
 
+ns.WARBANDS_ICON = CreateAtlasMarkup("warbands-icon", 16, 16)
+
 local SPAM_QUESTS = {
     [32468] = true, -- Crystal Clarity
     [32469] = true, -- Crystal Clarity
@@ -259,7 +261,10 @@ dataobject.OnTooltipShow = function(tooltip)
             map, level = ns.MapNameFromID(quest.map)
         end
         tooltip:AddDoubleLine(
-            ("%d: %s"):format(quest.id, ns.quest_names[quest.id] or UNKNOWN),
+            ("%d: %s %s"):format(
+                quest.id, ns.quest_names[quest.id] or UNKNOWN,
+                C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) and ns.WARBANDS_ICON or ""
+            ),
             ("%s (%s) %.2f, %.2f"):format(quest.map, map .. (level and (' / ' .. level) or ''), quest.x * 100, quest.y * 100)
         )
     end

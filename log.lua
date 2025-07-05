@@ -110,6 +110,9 @@ function ns:BuildQuestLog()
             GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
             GameTooltip:AddDoubleLine("time", quest.time)
             GameTooltip:AddDoubleLine(" ", date("%c", quest.time))
+            if C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) then
+                GameTooltip:AddLine(ACCOUNT_COMPLETED_QUEST_LABEL, ACCOUNT_WIDE_FONT_COLOR:GetRGB())
+            end
             GameTooltip:AddLine("Left-click for waypoint", 0, 1, 1)
             GameTooltip:AddLine("Shift-click to copy", 0, 1, 1)
             GameTooltip:AddLine("Right-click to remove", 0, 1, 1)
@@ -190,7 +193,10 @@ function ns:BuildQuestLog()
         else
             map, level = self.MapNameFromID(quest.map)
         end
-        line.Title:SetFormattedText("%d: %s", quest.id, self.quest_names[quest.id] or UNKNOWN)
+        line.Title:SetFormattedText("%d: %s %s",
+            quest.id, self.quest_names[quest.id] or UNKNOWN,
+            C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) and ns.WARBANDS_ICON or ""
+        )
         line.Location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
         line.Coords:SetFormattedText("%.2f, %.2f", quest.x * 100, quest.y * 100)
         line.Time:SetText(self.FormatLastSeen(quest.time))
