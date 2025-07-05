@@ -146,6 +146,14 @@ function ns:BuildQuestLog()
         end
     end
 
+    local function Time_OnShow(self)
+        if self.data and self.data.time then
+            self.Time:SetText(ns.FormatLastSeen(self.data.time))
+        else
+            self.Time:SetText(UNKNOWN)
+        end
+    end
+
     local initializer = function(line, index)
         if not line.Title then
             line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
@@ -176,7 +184,7 @@ function ns:BuildQuestLog()
             line:SetScript("OnEnter", Line_OnEnter)
             line:SetScript("OnLeave", GameTooltip_Hide)
             line:SetScript("OnClick", Line_OnClick)
-            line:SetScript("OnShow", function(self) if self.data then self.Time:SetText(ns.FormatLastSeen(self.data.time)) end end)
+            line:SetScript("OnShow", Time_OnShow)
             line:RegisterForClicks("LeftButtonUp","RightButtonUp")
         end
 
@@ -349,7 +357,13 @@ end
 
 do
     local QCSecondsFormatter = CreateFromMixins(SecondsFormatterMixin)
-    QCSecondsFormatter:Init(SECONDS_PER_MIN, SecondsFormatter.Abbreviation.Truncate, SecondsFormatterConstants.RoundUpLastUnit, SecondsFormatterConstants.ConvertToLower)
+    QCSecondsFormatter:Init(
+        _G.LESS_THAN_OPERAND and SECONDS_PER_MIN or 0, -- missing in classic
+        SecondsFormatter.Abbreviation.Truncate,
+        SecondsFormatterConstants.RoundUpLastUnit,
+        SecondsFormatterConstants.ConvertToLower,
+        SecondsFormatterConstants.RoundUpIntervals
+    )
     function QCSecondsFormatter:GetDesiredUnitCount(seconds)
         return seconds > SECONDS_PER_DAY and 2 or 1
     end
@@ -358,8 +372,10 @@ do
     end
 
     function ns.FormatLastSeen(t)
+        local now = time()
+        if not now then return UNKNOWN end
         t = tonumber(t)
         if not t or t == 0 then return NEVER end
-        return QCSecondsFormatter:Format(time() - t)
+        return QCSecondsFormatter:Format(now - t)
     end
 end
