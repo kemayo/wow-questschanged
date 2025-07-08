@@ -30,7 +30,7 @@ function ns:BuildLog()
         log.Vignettes:Hide()
     end
 
-    if log.TabSystem then
+    if _G.TabbedFrameMixin then
         log.TabSystem = CreateFrame("Frame", nil, log, "TabSystemTemplate")
         log.TabSystem:SetPoint("TOPLEFT", log, "BOTTOMLEFT", 22, 6)
         log:SetTabSystem(log.TabSystem)
@@ -38,7 +38,7 @@ function ns:BuildLog()
         log.Quests:Show()
         log.questTabID = log:AddNamedTab(QUESTS_LABEL, log.Quests)
 
-        if VIGNETTES then
+        if ns.VIGNETTES then
             log.vignettesTabID = log:AddNamedTab("Vignettes", log.Vignettes)
         end
 
