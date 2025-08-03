@@ -8,6 +8,14 @@ local function VignettePosition(vignetteGUID)
     if position then
         return uiMapID, position, position:GetXY()
     end
+    -- try again on the parent map:
+    local mapInfo = C_Map.GetMapInfo(uiMapID)
+    if mapInfo and mapInfo.parentMapID and mapInfo.parentMapID ~= 0 then
+        position = C_VignetteInfo.GetVignettePosition(vignetteGUID, mapInfo.parentMapID)
+        if position then
+            return mapInfo.parentMapID, position, position:GetXY()
+        end
+    end
 end
 
 local log = {}
