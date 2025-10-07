@@ -79,9 +79,9 @@ function ns:BuildLogPanel(initializer, dataProvider)
     Container.ScrollBox = ScrollBox
 
     local ScrollView = CreateScrollBoxListLinearView()
-    ScrollView:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
     ScrollView:SetElementExtent(32)  -- Fixed height for each row; required as we're not using XML.
     ScrollView:SetElementInitializer("Button", initializer)
+    ScrollView:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
     Container.ScrollView = ScrollView
 
     ScrollUtil.InitScrollBoxWithScrollBar(ScrollBox, ScrollBar, ScrollView)
