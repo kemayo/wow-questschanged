@@ -68,29 +68,35 @@ function ns:BuildLogPanel(initializer, dataProvider)
     Container:SetPoint("TOPLEFT", 12, -32)
     Container:SetPoint("BOTTOMRIGHT", -3, 4)
 
+    local ScrollBox = CreateFrame("Frame", nil, Container, "WowScrollBoxList")
+    -- SetPoint handled by manager below
+    Container.ScrollBox = ScrollBox
+
     local ScrollBar = CreateFrame("EventFrame", nil, Container, "WowTrimScrollBar")
     ScrollBar:SetPoint("TOPRIGHT", 0, 5)
     ScrollBar:SetPoint("BOTTOMRIGHT", 0, 2)
+    ScrollBar:SetHideTrackIfThumbExceedsTrack(true)
     Container.ScrollBar = ScrollBar
 
-    local ScrollBox = CreateFrame("Frame", nil, Container, "WowScrollBoxList")
-    ScrollBox:SetPoint("TOPLEFT")
-    ScrollBox:SetPoint("BOTTOMRIGHT", ScrollBar, "BOTTOMLEFT", -2, 2)
-    Container.ScrollBox = ScrollBox
-
-    local ScrollView = CreateScrollBoxListLinearView()
+    local pad, spacing = 4, 2
+    local ScrollView = CreateScrollBoxListLinearView(pad, pad, pad, pad, spacing)
     ScrollView:SetElementExtent(32)  -- Fixed height for each row; required as we're not using XML.
     ScrollView:SetElementInitializer("Button", initializer)
     ScrollView:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
     Container.ScrollView = ScrollView
 
     ScrollUtil.InitScrollBoxWithScrollBar(ScrollBox, ScrollBar, ScrollView)
+    ScrollUtil.AddManagedScrollBarVisibilityBehavior(ScrollBox, ScrollBar,
+        {  -- with bar
+            CreateAnchor("TOPLEFT", Container),
+            CreateAnchor("BOTTOMRIGHT", Container, "BOTTOMRIGHT", -25, 0),
+        },
+        { -- without bar
+            CreateAnchor("TOPLEFT", Container),
+            CreateAnchor("BOTTOMRIGHT", Container, "BOTTOMRIGHT", -4, 0),
+        }
+    )
 
-    -- This causes errors when removing lines:
-    -- Container:SetScript("OnShow", function()
-    --     -- for the timestamps
-    --     ScrollView:Rebuild()
-    -- end)
     ScrollBox:FullUpdate()
 
     return Container
