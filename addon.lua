@@ -199,7 +199,7 @@ function ns:CheckQuests()
 end
 
 function ns:RemoveQuest(index)
-    if index == 0 then
+    if index == "all" then
         table.wipe(self.quests_completed)
         table.wipe(self.dbpc.log)
         self:TriggerEvent(self.Event.OnAllQuestsRemoved)
@@ -233,8 +233,12 @@ local dataobject = ldb:GetDataObjectByName("QuestsChanged") or ldb:NewDataObject
 
 dataobject.OnClick = function(frame, button)
     if button == "RightButton" then
-        -- clear the current session
-        table.wipe(ns.quests_completed)
+        if IsShiftKeyDown() and IsAltKeyDown() and IsControlKeyDown() then
+            return ns:RemoveQuest("all")
+        else
+            -- clear the current session
+            table.wipe(ns.quests_completed)
+        end
     else
         if IsShiftKeyDown() then
             local data = ns.dbpc.log[#ns.dbpc.log]
@@ -283,6 +287,7 @@ dataobject.OnTooltipShow = function(tooltip)
     tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
     tooltip:AddLine("Shift-left-click to copy the last quest", 0, 1, 1)
     tooltip:AddLine("Right-click to clear the current session", 0, 1, 1)
+    tooltip:AddLine("Ctrl-shift-alt-right-click to clear the entire history", 1, 0, 0)
 end
 
 ns.dataobject = dataobject
