@@ -91,6 +91,7 @@ function ns:BuildLogPanel(initializer, dataProvider)
     --     -- for the timestamps
     --     ScrollView:Rebuild()
     -- end)
+    ScrollBox:FullUpdate()
 
     return Container
 end
