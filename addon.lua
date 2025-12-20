@@ -360,9 +360,9 @@ StaticPopupDialogs["QUESTSCHANGED_COPYBOX"] = {
         return false
     end,
     OnShow = function(self, data)
-        if data then
-            self.editBox:SetText(data)
-            self.editBox:HighlightText()
+        if data and self:GetEditBox() then
+            self:GetEditBox():SetText(data)
+            self:GetEditBox():HighlightText()
         end
     end,
 }
