@@ -1,4 +1,4 @@
-## Interface: 120001, 110207, 50503
+## Interface: 120001, 120000, 110207, 50503
 ## Title: QuestsChanged
 ## Author: Kemayo
 ## Notes: Show what quests have changed
