@@ -30,7 +30,7 @@ function ns:BuildLog()
         log.Vignettes:Hide()
     end
 
-    if _G.TabbedFrameMixin then
+    if _G.TabSystemMixin then
         log.TabSystem = CreateFrame("Frame", nil, log, "TabSystemTemplate")
         log.TabSystem:SetPoint("TOPLEFT", log, "BOTTOMLEFT", 22, 6)
         log:SetTabSystem(log.TabSystem)
