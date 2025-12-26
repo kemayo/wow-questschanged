@@ -32,6 +32,7 @@ ns.Callbacks = Callbacks
 Callbacks:GenerateCallbackEvents{
     "OnQuestAdded", "OnQuestRemoved", "OnAllQuestsRemoved",
     "OnVignetteAdded", "OnVignetteRemoved", "OnAllVignettesRemoved",
+    "OnPingAdded", "OnPingRemoved", "OnAllPingsRemoved",
 }
 ns.Event = Callbacks.Event
 
@@ -108,6 +109,8 @@ function ns:PLAYER_LOGIN()
         self:RegisterCallback("VIGNETTE_MINIMAP_UPDATED")
         self:RegisterCallback("VIGNETTES_UPDATED")
     end
+
+    self:RegisterCallback("MINIMAP_PING")
 end
 function ns:QUEST_LOG_UPDATE()
     Callbacks:Show()

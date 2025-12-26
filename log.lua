@@ -29,6 +29,8 @@ function ns:BuildLog()
         log.Vignettes = self:BuildVignetteLog()
         log.Vignettes:Hide()
     end
+    log.Pings = self:BuildPingLog()
+    log.Pings:Hide()
 
     if _G.TabSystemMixin then
         log.TabSystem = CreateFrame("Frame", nil, log, "TabSystemTemplate")
@@ -42,23 +44,40 @@ function ns:BuildLog()
             log.vignettesTabID = log:AddNamedTab("Vignettes", log.Vignettes)
         end
 
+        log.pingTabID = log:AddNamedTab(PING, log.Pings)
+
         log:SetTab(log.questTabID)
-    elseif ns.VIGNETTES then
+    else
         local QuestButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
         QuestButton:SetText(QUESTS_LABEL)
         QuestButton:SetSize(120, 22)
         QuestButton:SetPoint("TOP", log, "BOTTOM", -71, 8)
         QuestButton:SetScript("OnClick", function()
-            log.Vignettes:Hide()
+            if log.Vignettes then log.Vignettes:Hide() end
+            log.Pings:Hide()
             log.Quests:Show()
         end)
-        local VignetteButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
-        VignetteButton:SetText("Vignettes")
-        VignetteButton:SetSize(120, 22)
-        VignetteButton:SetPoint("LEFT", QuestButton, "RIGHT", 22, 0)
-        VignetteButton:SetScript("OnClick", function()
+        local VignetteButton
+        if ns.VIGNETTES then
+            VignetteButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
+            VignetteButton:SetText("Vignettes")
+            VignetteButton:SetSize(120, 22)
+            VignetteButton:SetPoint("LEFT", QuestButton, "RIGHT", 22, 0)
+            VignetteButton:SetScript("OnClick", function()
+                log.Quests:Hide()
+                log.Pings:Hide()
+                log.Vignettes:Show()
+            end)
+        end
+        local PingButton = CreateFrame("EventButton", nil, log, "UIPanelButtonTemplate")
+        PingButton:SetText(PING or "Ping")
+        PingButton:SetSize(120, 22)
+        PingButton:SetPoint("LEFT", VignetteButton or QuestButton, "RIGHT", 22, 0)
+        PingButton:SetPoint("TOP", log, "BOTTOM", -71, 8)
+        PingButton:SetScript("OnClick", function()
+            if log.Vignettes then log.Vignettes:Hide() end
             log.Quests:Hide()
-            log.Vignettes:Show()
+            log.Pings:Show()
         end)
     end
 end
@@ -142,13 +161,15 @@ function ns:BuildQuestLog()
         else
             if quest and quest.map and quest.x and quest.y then
                 local m = tonumber(quest.map)
-                if C_Map.CanSetUserWaypointOnMap(m) then
+                if C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(m) then
                     if C_Map.HasUserWaypoint() then
                         C_Map.ClearUserWaypoint()
                     end
                     local p = UiMapPoint.CreateFromCoordinates(m,quest.x,quest.y)
                     C_Map.SetUserWaypoint(p)
                     OpenWorldMap(m)
+                elseif TomTom then
+                    TomTom:AddWaypoint(m, quest.x, quest.y)
                 else
                     ns.Print('Can\'t set waypoint for', m, quest.x, quest.y)
                 end
@@ -274,13 +295,15 @@ function ns:BuildVignetteLog()
         else
             if vignette and vignette.uiMapID and vignette.x and vignette.y then
                 local m = tonumber(vignette.uiMapID)
-                if C_Map.CanSetUserWaypointOnMap(m) then
+                if C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(m) then
                     if C_Map.HasUserWaypoint() then
                         C_Map.ClearUserWaypoint()
                     end
                     local p = UiMapPoint.CreateFromCoordinates(m, vignette.x, vignette.y)
                     C_Map.SetUserWaypoint(p)
                     OpenWorldMap(m)
+                elseif TomTom then
+                    TomTom:AddWaypoint(m, vignette.x, vignette.y)
                 else
                     ns.Print('Can\'t set waypoint for', m, vignette.x, vignette.y)
                 end
@@ -347,6 +370,102 @@ function ns:BuildVignetteLog()
         dataProvider:Remove(guid)
     end)
     self:RegisterCallback(self.Event.OnAllVignettesRemoved, function()
+        dataProvider:Flush()
+    end)
+
+    return ns:BuildLogPanel(initializer, dataProvider)
+end
+
+function ns:BuildPingLog()
+    local function Line_OnEnter(self)
+        local ping = self.data
+        if ping then
+            GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+            GameTooltip:AddLine(ping.from or UNKNOWN)
+            GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(ping.x * 100, ping.y * 100))
+            GameTooltip:AddDoubleLine("time", ping.time)
+            GameTooltip:AddDoubleLine(" ", date("%c", ping.time))
+            GameTooltip:AddLine("Left-click for waypoint", 0, 1, 1)
+            GameTooltip:AddLine("Shift-click to copy", 0, 1, 1)
+            GameTooltip:AddLine("Right-click to remove", 0, 1, 1)
+            GameTooltip:Show()
+        end
+    end
+
+    local function Line_OnClick(self, button, down)
+        local ping = self.data
+        if button == "RightButton" then
+            ns:RemovePing(ping)
+        elseif IsShiftKeyDown() then
+            StaticPopup_Show("QUESTSCHANGED_COPYBOX", nil, nil, ("[%d] = {},"):format(ns.GetCoord(ping.x, ping.y)))
+        else
+            if ping and ping.uiMapID and ping.x and ping.y then
+                local m = tonumber(ping.uiMapID)
+                if C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(m) then
+                    if C_Map.HasUserWaypoint() then
+                        C_Map.ClearUserWaypoint()
+                    end
+                    local p = UiMapPoint.CreateFromCoordinates(m, ping.x, ping.y)
+                    C_Map.SetUserWaypoint(p)
+                    OpenWorldMap(m)
+                elseif TomTom then
+                    TomTom:AddWaypoint(m, ping.x, ping.y)
+                else
+                    ns.Print('Can\'t set waypoint for', m, ping.x, ping.y)
+                end
+            end
+        end
+    end
+
+    local initializer = function(line, index)
+        if not line.Title then
+            line:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+            line:GetHighlightTexture():SetTexCoord(0.2, 0.8, 0.2, 0.8)
+            line:GetHighlightTexture():SetAlpha(0.5)
+
+            line.Title = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightLeft")
+            line.Title:SetPoint("TOPLEFT")
+            line.Title:SetPoint("TOPRIGHT", line, "TOPLEFT", 260, 0)
+            line.Title:SetPoint("BOTTOM", 0, 16)
+            line.Time = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.Time:SetPoint("TOPRIGHT")
+            line.Time:SetPoint("TOPLEFT", line, "TOPRIGHT", -100, 0)
+            line.Time:SetPoint("BOTTOM", 0, 16)
+            line.Location = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.Location:SetPoint("TOPRIGHT", line.Time, "TOPLEFT")
+            line.Location:SetPoint("TOPLEFT", line.Title, "TOPRIGHT")
+            line.Location:SetPoint("BOTTOM", 0, 16)
+            line.Coords = line:CreateFontString(nil, "ARTWORK", "GameFontHighlightRight")
+            line.Coords:SetPoint("TOPLEFT", line.Location, "BOTTOMLEFT")
+            line.Coords:SetPoint("TOPRIGHT", line.Location, "BOTTOMRIGHT")
+            line.Coords:SetPoint("BOTTOM")
+
+            line:SetScript("OnEnter", Line_OnEnter)
+            line:SetScript("OnLeave", GameTooltip_Hide)
+            line:SetScript("OnClick", Line_OnClick)
+            line:SetScript("OnShow", function(self) if self.data then self.Time:SetText(ns.FormatLastSeen(self.data.time)) end end)
+            line:RegisterForClicks("LeftButtonUp","RightButtonUp")
+        end
+
+        local ping = self.pingLog[index]
+        line.data = ping
+
+        local map, level = self.MapNameFromID(ping.uiMapID)
+        line.Title:SetText(ping.from or UNKNOWN)
+        line.Location:SetFormattedText("%s (%s)", ping.uiMapID or "?", map .. (level and (' / ' .. level) or ''))
+        line.Coords:SetFormattedText("%.2f, %.2f", ping.x * 100, ping.y * 100)
+        line.Time:SetText(self.FormatLastSeen(ping.time))
+    end
+
+    local dataProvider = CreateIndexRangeDataProvider(#self.pingLog)
+
+    self:RegisterCallback(self.Event.OnPingAdded, function(_, ping, index)
+        dataProvider:SetSize(#self.pingLog)
+    end)
+    self:RegisterCallback(self.Event.OnPingRemoved, function(_, ping, index)
+        dataProvider:SetSize(#self.pingLog)
+    end)
+    self:RegisterCallback(self.Event.OnAllPingsRemoved, function()
         dataProvider:Flush()
     end)
 

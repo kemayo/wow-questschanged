@@ -26,4 +26,5 @@ embeds.xml
 
 addon.lua
 vignettes.lua
+pings.lua
 log.lua
