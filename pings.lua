@@ -5,19 +5,30 @@ local MinimapPosition
 
 local log = {}
 ns.pingLog = log
+
 function ns:MINIMAP_PING(_, unit, x, y)
     local uiMapID, mx, my = MinimapPosition(x, y)
     if not (uiMapID and mx and my) then
         return
     end
+    ns:AddPing(uiMapID, x, y, unit)
+end
 
+function ns:OnMinimapMouseDown(...)
+    local scale, cx, cy = UIParent:GetEffectiveScale(), GetCursorPosition()
+    local mWidth, mHeight = Minimap:GetSize()
+    local left, bottom = Minimap:GetLeft(), Minimap:GetBottom()
+    local ix, iy = (cx / scale) - left, (cy / scale) - bottom
+    local uiMapID, mx, my = MinimapPosition((ix / mWidth) - 0.5, (iy / mHeight) - 0.5)
+    self:AddPing(uiMapID, mx, my, "player")
+end
+
+function ns:AddPing(uiMapID, x, y, unit)
     table.insert(log, {
         time = time(),
         uiMapID = uiMapID,
-        -- x = px + (x / 100),
-        -- y = py - (y / 100),
-        x = mx,
-        y = my,
+        x = x,
+        y = y,
         from = unit,
     })
     
@@ -97,8 +108,9 @@ do
     end
 
     function MinimapPosition(x, y)
-        -- x and y are offsets from the center of the minimap at its current zoom
-        -- level, between -0.5 and 0.5
+        -- x and y are offsets from the center of the minimap at its current
+        -- zoom level, between -0.5 and 0.5. They're this because that's what
+        -- the arguments to MINIMAP_PING are.
         local mapRadius = GetViewRadius()
         local uiMapID = C_Map.GetBestMapForUnit('player')
         if not uiMapID then return end

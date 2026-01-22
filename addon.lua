@@ -110,7 +110,11 @@ function ns:PLAYER_LOGIN()
         self:RegisterCallback("VIGNETTES_UPDATED")
     end
 
-    self:RegisterCallback("MINIMAP_PING")
+    if C_EventUtils.IsEventValid("MINIMAP_PING") then
+        self:RegisterCallback("MINIMAP_PING")
+    else
+        Minimap:HookScript("OnMouseDown", function(...) ns:OnMinimapMouseDown(...) end)
+    end
 end
 function ns:QUEST_LOG_UPDATE()
     Callbacks:Show()
