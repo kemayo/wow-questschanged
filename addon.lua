@@ -247,6 +247,14 @@ dataobject.OnClick = function(frame, button)
             -- clear the current session
             table.wipe(ns.quests_completed)
         end
+    elseif button == "MiddleButton" then
+        local uiMapID = C_Map.GetBestMapForUnit('player')
+        if not uiMapID then return end
+        local position = C_Map.GetPlayerMapPosition(uiMapID, 'player')
+        if not position then return end
+        local px, py = position:GetXY()
+        if not (px and py) then return end
+        ns:AddPing(uiMapID, px, py, "player")
     else
         if IsShiftKeyDown() then
             local data = ns.dbpc.log[#ns.dbpc.log]
@@ -295,7 +303,8 @@ dataobject.OnTooltipShow = function(tooltip)
     tooltip:AddDoubleLine("Location", ("%s (%s) %.2f, %.2f"):format(mapID or UNKNOWN, mapname .. (subname and (' / ' .. subname) or ''), (x or 0) * 100, (y or 0) * 100), 1, 0, 1, 1, 0, 1)
     tooltip:AddLine("Left-click to show your quest history", 0, 1, 1)
     tooltip:AddLine("Shift-left-click to copy the last quest", 0, 1, 1)
-    tooltip:AddLine("Right-click to clear the current session", 0, 1, 1)
+    tooltip:AddLine("Middle-click to log a ping at your current location", 0, 1, 1)
+    tooltip:AddLine("Right-click to clear the current session", 1, 0, 0)
     tooltip:AddLine("Ctrl-shift-alt-right-click to clear the entire history", 1, 0, 0)
 end
 
