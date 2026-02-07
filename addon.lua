@@ -280,14 +280,17 @@ dataobject.OnTooltipShow = function(tooltip)
         else
             map, level = ns.MapNameFromID(quest.map)
         end
-        tooltip:AddDoubleLine(
-            ("%d: %s %s%s"):format(
-                quest.id, ns.quest_names[quest.id] or UNKNOWN,
-                C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) and ns.WARBANDS_ICON or "",
-                C_QuestLog.IsQuestFlaggedCompleted(quest.id) and "" or ns.CROSS_ICON
-            ),
-            ("%s (%s) %.2f, %.2f"):format(quest.map, map .. (level and (' / ' .. level) or ''), quest.x * 100, quest.y * 100)
-        )
+        local still_completed = C_QuestLog.IsQuestFlaggedCompleted(quest.id)
+        if still_completed then
+            tooltip:AddDoubleLine(
+                ("%d: %s %s%s"):format(
+                    quest.id, ns.quest_names[quest.id] or UNKNOWN,
+                    C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) and ns.WARBANDS_ICON or "",
+                    still_completed and "" or ns.CROSS_ICON
+                ),
+                ("%s (%s) %.2f, %.2f"):format(quest.map, map .. (level and (' / ' .. level) or ''), quest.x * 100, quest.y * 100)
+            )
+        end
     end
 
     local x, y
