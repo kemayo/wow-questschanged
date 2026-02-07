@@ -11,7 +11,7 @@ function ns:MINIMAP_PING(_, unit, x, y)
     if not (uiMapID and mx and my) then
         return
     end
-    ns:AddPing(uiMapID, x, y, unit)
+    ns:AddPing(uiMapID, mx, my, unit)
 end
 
 function ns:OnMinimapMouseDown(...)
@@ -31,7 +31,7 @@ function ns:AddPing(uiMapID, x, y, unit)
         y = y,
         from = unit,
     })
-    
+
     self:TriggerEvent(self.Event.OnPingAdded, log[#log], #log)
 end
 
@@ -94,7 +94,7 @@ do
         GetZoneSize = function(uiMapID)
             local instance, center = C_Map.GetWorldPosFromMapPos(uiMapID, vector05)
             local width, height
-            
+
             local _, topleft = C_Map.GetWorldPosFromMapPos(uiMapID, vector00)
             if center and topleft then
                 local top, left = topleft:GetXY()
