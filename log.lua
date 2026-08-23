@@ -136,8 +136,8 @@ function ns:BuildQuestLog()
             GameTooltip:AddDoubleLine("coords", ("%.2f, %.2f"):format(quest.x * 100, quest.y * 100))
             GameTooltip:AddDoubleLine("time", quest.time)
             GameTooltip:AddDoubleLine(" ", date("%c", quest.time))
-            if C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) then
-                GameTooltip:AddLine(ACCOUNT_COMPLETED_QUEST_LABEL, ACCOUNT_WIDE_FONT_COLOR:GetRGB())
+            if C_QuestLog.IsAccountQuest and C_QuestLog.IsAccountQuest(quest.id) then
+                GameTooltip:AddLine(ACCOUNT_QUEST_LABEL, ACCOUNT_WIDE_FONT_COLOR:GetRGB())
             end
             if not C_QuestLog.IsQuestFlaggedCompleted(quest.id) then
                 GameTooltip:AddLine("No longer complete", 1, 0, 0)
@@ -234,7 +234,7 @@ function ns:BuildQuestLog()
         end
         line.Title:SetFormattedText("%d: %s %s%s",
             quest.id, self.quest_names[quest.id] or UNKNOWN,
-            C_QuestLog.IsQuestFlaggedCompletedOnAccount and C_QuestLog.IsQuestFlaggedCompletedOnAccount(quest.id) and ns.WARBANDS_ICON or "",
+            C_QuestLog.IsAccountQuest and C_QuestLog.IsAccountQuest(quest.id) and ns.WARBANDS_ICON or "",
             C_QuestLog.IsQuestFlaggedCompleted(quest.id) and "" or ns.CROSS_ICON
         )
         line.Location:SetFormattedText("%s (%s)", quest.map, map .. (level and (' / ' .. level) or ''))
